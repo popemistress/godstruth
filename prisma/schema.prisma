@@ -1,0 +1,283 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+enum ContentType {
+  VIDEO
+  BOOK
+  COURSE
+  PODCAST
+  GUIDE
+}
+
+enum Testament {
+  OLD
+  NEW
+}
+
+enum Plan {
+  FREE
+  SUPPORTER
+  PARTNER
+}
+
+enum SubStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  TRIALING
+  INCOMPLETE
+}
+
+// ─── Auth (NextAuth) ──────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // hashed — null for OAuth users
+  role          Role      @default(USER)
+
+  accounts      Account[]
+  sessions      Session[]
+  subscription  Subscription?
+  progress      UserProgress[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Subscriptions ────────────────────────────────────────────────────────────
+
+model Subscription {
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  stripeCustomerId   String    @unique
+  stripePriceId      String
+  stripeSubscriptionId String  @unique
+  status             SubStatus
+  plan               Plan      @default(FREE)
+  currentPeriodEnd   DateTime
+
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+// ─── Content ──────────────────────────────────────────────────────────────────
+
+model Content {
+  id          String      @id @default(cuid())
+  type        ContentType
+  title       String
+  slug        String      @unique
+  description String      @db.Text
+  thumbnail   String?     // UploadThing URL
+  mediaUrl    String?     // UploadThing URL (video/audio/PDF)
+  duration    Int?        // seconds for video/audio
+  published   Boolean     @default(false)
+  premium     Boolean     @default(false)
+  featured    Boolean     @default(false)
+  order       Int         @default(0)
+
+  bookId      String?
+  book        Book?       @relation(fields: [bookId], references: [id])
+
+  seriesId    String?
+  series      Series?     @relation(fields: [seriesId], references: [id])
+
+  tags        ContentTag[]
+  progress    UserProgress[]
+  chapters    CourseChapter[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([type, published])
+  @@index([slug])
+  @@index([bookId])
+  @@index([seriesId])
+}
+
+model Series {
+  id          String      @id @default(cuid())
+  title       String
+  slug        String      @unique
+  description String      @db.Text
+  thumbnail   String?
+  type        ContentType
+  order       Int         @default(0)
+
+  content     Content[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Book {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  testament Testament
+  order     Int
+  slug      String    @unique
+
+  content   Content[]
+}
+
+model Tag {
+  id      String       @id @default(cuid())
+  name    String       @unique
+  slug    String       @unique
+  content ContentTag[]
+}
+
+model ContentTag {
+  contentId String
+  tagId     String
+  content   Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([contentId, tagId])
+}
+
+// ─── User Progress ────────────────────────────────────────────────────────────
+
+model UserProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  contentId   String
+  progress    Float    @default(0)  // 0.0 – 1.0
+  completed   Boolean  @default(false)
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content     Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, contentId])
+  @@index([userId])
+}
+
+// ─── Course Chapters & Lessons ────────────────────────────────────────────────
+
+model CourseChapter {
+  id        String         @id @default(cuid())
+  contentId String
+  title     String
+  order     Int            @default(0)
+  content   Content        @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  lessons   CourseLesson[]
+
+  createdAt DateTime @default(now())
+
+  @@index([contentId])
+}
+
+model CourseLesson {
+  id         String        @id @default(cuid())
+  chapterId  String
+  title      String
+  type       String        @default("VIDEO")   // VIDEO, READING, QUIZ, ASSIGNMENT, IMAGE
+  duration   Int?                               // seconds
+  order      Int           @default(0)
+  mediaUrl   String?                            // image / legacy video URL
+  videoUrl   String?                            // embeddable video URL (YouTube, Vimeo, etc.)
+  audioUrl   String?                            // podcast / audio file URL
+  content    String?                            // rich text / markdown content
+  published  Boolean       @default(true)
+  chapter    CourseChapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@index([chapterId])
+}
+
+// ─── Bible Editions ───────────────────────────────────────────────────────────
+
+model BibleEdition {
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  translation   String   // KJV, NIV, NASB, NKJV, ESV, NLT, CSB, etc.
+  publisher     String?
+  publishedYear Int?
+  description   String   @db.Text
+  history       String   @db.Text
+  coverUrl      String?  // UploadThing cover image URL
+  fileUrl       String?  // UploadThing PDF URL
+  filename      String?  // Original filename from bibles/ folder
+  canonRating   Float    @default(9)
+  canonNotes    String   @db.Text
+  gradientFrom  String   @default("#1B2A4A")
+  gradientTo    String   @default("#0D1525")
+  accentColor   String   @default("#C9A84C")
+  featured      Boolean  @default(false)
+  order         Int      @default(0)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([translation])
+  @@index([slug])
+}
+
+// ─── Site Settings ────────────────────────────────────────────────────────────
+
+model SiteSettings {
+  id              String   @id @default("singleton")
+  siteName        String   @default("Gods Truth")
+  tagline         String   @default("Resources to help people understand God's Word")
+  announcementBar String?
+  announcementUrl String?
+  maintenanceMode Boolean  @default(false)
+  updatedAt       DateTime @updatedAt
+}

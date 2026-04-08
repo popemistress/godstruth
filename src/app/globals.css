@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* BibleProject design tokens */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
+
+  /* Colors */
+  --color-brand: #00b3e5;
+  --color-brand-accessible: #157fd7;
+  --color-black: #1b1b1b;
+  --color-white: #ffffff;
+
+  --color-neutral-00: #ffffff;
+  --color-neutral-10: #f6f5f4;
+  --color-neutral-20: #edeceb;
+  --color-neutral-30: #e0dfdf;
+  --color-neutral-40: #cccbca;
+  --color-neutral-45: #767676;
+  --color-neutral-50: #424242;
+  --color-neutral-60: #363535;
+  --color-neutral-70: #262626;
+  --color-neutral-80: #1b1b1b;
+  --color-neutral-90: #000000;
+
+  --color-tan-05: #f9f7f1;
+  --color-tan-10: #efe8db;
+  --color-tan-20: #d7cab0;
+
+  --color-cyan-surface: #e4f2f5;
+
+  --color-text-primary: var(--color-neutral-80);
+  --color-text-secondary: var(--color-neutral-45);
+  --color-border: var(--color-neutral-30);
+
+  /* Shadows */
+  --shadow-sm: 0px 2px 2px 0px rgba(88,70,80,0.01), 0px 1px 2px 0px rgba(88,70,80,0.05), 0px 1px 1px 0px rgba(88,70,80,0.09), 0px 0px 1px 0px rgba(88,70,80,0.1);
+  --shadow-md: 0px 14px 5px 0px rgba(88,70,80,0.01), 0px 8px 5px 0px rgba(88,70,80,0.04), 0px 3px 3px 0px rgba(88,70,80,0.07), 0px 0px 2px 0px rgba(88,70,80,0.08);
+
+  /* Radii */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeSpeed;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-text-primary);
+  background: var(--color-neutral-00);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Focus visible */
+:focus-visible {
+  outline: 3px solid var(--color-brand-accessible);
+  outline-offset: 2px;
+}
+
+/* Link reset */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-neutral-30); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-neutral-40); }
+
+@layer components {
+  .container-page {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-neutral-80 text-white text-sm font-medium px-5 py-2.5 transition-colors hover:bg-neutral-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-accessible disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-neutral-20 text-neutral-80 text-sm font-medium px-5 py-2.5 transition-colors hover:bg-neutral-30 focus-visible:outline focus-visible:outline-2 disabled:opacity-50;
+  }
+  .btn-brand {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand text-white text-sm font-medium px-5 py-2.5 transition-colors hover:opacity-90 disabled:opacity-50;
+  }
+  .card {
+    @apply rounded-lg bg-white border border-neutral-30 shadow-sm overflow-hidden;
+  }
+}
