@@ -7,7 +7,7 @@
  */
 
 import { cn } from "@/lib/utils";
-import { parseScriptureList } from "@/lib/scripture-utils";
+import { parseScriptureList, BOOK_MAP } from "@/lib/scripture-utils";
 import { useEffect, useRef } from "react";
 
 interface LessonContentProps {
@@ -38,9 +38,13 @@ const CHIP_CLASS =
  * Replace parenthetical scripture lists with individual per-reference chips.
  * "(Mt. 7:7-11; 18:19-20; Jn. 14:12)" becomes three separate <cite> chips,
  * each carrying only its own normalised reference in data-scripture.
+ *
+ * Pass 2 catches bare inline refs like "Jn. 3:16" or "1 Cor. 13:4-7" that
+ * appear outside parentheses and are not already wrapped in a chip.
  */
 function scriptureChips(text: string): string {
-  return text.replace(
+  // ── Pass 1: parenthetical groups "(Mt. 7:7-11; 18:19-20)" ──────────────────
+  let result = text.replace(
     /\(([^)]{3,120}?\d+:\d+[^)]{0,100}?)\)/g,
     (_, inner) => {
       const refs = parseScriptureList(inner);
@@ -53,6 +57,37 @@ function scriptureChips(text: string): string {
         .join("");
     }
   );
+
+  // ── Pass 2: inline refs outside parens, e.g. "Mt. 7:7" in plain text ───────
+  // Split on HTML tags so we only scan text nodes, and track <cite> depth to
+  // avoid re-processing the display text already inside an existing chip.
+  const TAG_RE = /(<[^>]+>)/g;
+  const segments = result.split(TAG_RE);
+  let citeDepth = 0;
+  result = segments
+    .map((seg, i) => {
+      if (i % 2 === 1) {
+        // HTML tag — update cite nesting depth, pass through unchanged
+        if (/^<cite\b/i.test(seg)) citeDepth++;
+        else if (/^<\/cite>/i.test(seg)) citeDepth = Math.max(0, citeDepth - 1);
+        return seg;
+      }
+      // Text node — skip if we're inside an existing <cite>
+      if (citeDepth > 0) return seg;
+      return seg.replace(
+        /\b((?:\d\s+)?[A-Za-z]+\.?)\s+(\d+:\d+(?:[–\-]\d+)?(?:,\s*\d+)?)\b/g,
+        (match, bookPart, versePart) => {
+          const book = BOOK_MAP[bookPart.toLowerCase().trim()];
+          if (!book) return match;
+          const verseRef = versePart.replace("–", "-").trim();
+          const display = `${book} ${verseRef}`;
+          return `<cite data-scripture="${escAttr(display)}" class="${CHIP_CLASS}">${escHtml(display)}</cite>`;
+        }
+      );
+    })
+    .join("");
+
+  return result;
 }
 
 /**
