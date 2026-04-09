@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { db } from "@/lib/db";
 import {
   GraduationCap,
@@ -142,13 +141,6 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
           {/* Left column: course info */}
           <div className="lg:col-span-2 space-y-8">
-
-            {/* Thumbnail (if present) */}
-            {course.thumbnail && (
-              <div className="relative aspect-video rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
-                <Image src={course.thumbnail} alt={course.title} fill className="object-cover" />
-              </div>
-            )}
 
             {/* Gods Plan Overview Image CTA — fullscreen on click */}
             {firstLesson?.type === "IMAGE" && firstLesson.mediaUrl && (
