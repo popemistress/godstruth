@@ -7,7 +7,7 @@ const utapi = new UTApi();
 const db = new PrismaClient();
 
 async function main() {
-  const filePath = path.resolve(process.cwd(), "Gods-plan-for-creation-course.png");
+  const filePath = path.resolve(process.cwd(), "gpfm.png");
 
   if (!fs.existsSync(filePath)) {
     console.error("File not found:", filePath);
@@ -18,7 +18,7 @@ async function main() {
 
   const fileBuffer = fs.readFileSync(filePath);
   const blob = new Blob([fileBuffer], { type: "image/png" });
-  const file = new File([blob], "gods-plan-for-creation-course.png", { type: "image/png" });
+  const file = new File([blob], "gpfm.png", { type: "image/png" });
 
   const response = await utapi.uploadFiles(file);
 
