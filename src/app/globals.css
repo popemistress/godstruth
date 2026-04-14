@@ -57,6 +57,7 @@ html {
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
   text-rendering: optimizeSpeed;
+  overflow-x: hidden;
 }
 
 body {
@@ -66,6 +67,7 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 /* Focus visible */

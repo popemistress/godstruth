@@ -51,9 +51,9 @@ export default async function BiblesPage() {
             The Word of God
           </h1>
 
-          {/* Post-it notes */}
+          {/* Post-it notes — hidden on small screens to avoid overlap */}
           {/* Left post-it — halfway between left edge and center text, tilted 25deg right */}
-          <div className="absolute top-1/2 left-[12%] pointer-events-auto" style={{ transform: "translateY(-50%) rotate(10deg)" }}>
+          <div className="hidden lg:block absolute top-1/2 left-[12%] pointer-events-auto" style={{ transform: "translateY(-50%) rotate(10deg)" }}>
             <div
               className="relative px-5 py-4 w-52 text-left"
               style={{
@@ -74,7 +74,7 @@ export default async function BiblesPage() {
           </div>
 
           {/* Right post-it — halfway between right edge and center text, tilted 25deg right */}
-          <div className="absolute top-1/2 right-[12%] pointer-events-auto" style={{ transform: "translateY(-50%) rotate(-10deg)" }}>
+          <div className="hidden lg:block absolute top-1/2 right-[12%] pointer-events-auto" style={{ transform: "translateY(-50%) rotate(-10deg)" }}>
             <div
               className="relative px-5 py-4 w-52 text-left"
               style={{

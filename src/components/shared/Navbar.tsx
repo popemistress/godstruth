@@ -28,7 +28,7 @@ export function Navbar({ session, announcementMessage, announcementUrl }: Navbar
   return (
     <>
       {announcementMessage && (
-        <div className="relative bg-brand text-white text-sm text-center py-2.5 px-10">
+        <div className="relative bg-brand text-white text-sm text-center py-2.5 px-4 sm:px-10">
           {announcementUrl ? (
             <Link href={announcementUrl} className="hover:underline font-medium">{announcementMessage}</Link>
           ) : (

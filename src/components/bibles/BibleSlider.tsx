@@ -117,11 +117,11 @@ export function BibleSlider({ bibles }: BibleSliderProps) {
   const nextRef = useRef<HTMLButtonElement>(null);
 
   return (
-    <div className="relative">
-      {/* Custom nav buttons */}
+    <div className="relative px-0 sm:px-5">
+      {/* Custom nav buttons — hidden on mobile (swipe to navigate) */}
       <button
         ref={prevRef}
-        className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 h-9 w-9 flex items-center justify-center rounded-full bg-white border border-neutral-20 shadow-md hover:shadow-lg hover:border-neutral-40 transition-all"
+        className="hidden sm:flex absolute -left-1 top-1/2 -translate-y-1/2 z-10 h-9 w-9 items-center justify-center rounded-full bg-white border border-neutral-20 shadow-md hover:shadow-lg hover:border-neutral-40 transition-all"
         aria-label="Previous"
       >
         <ChevronLeft className="h-4 w-4 text-neutral-60" />
@@ -129,7 +129,7 @@ export function BibleSlider({ bibles }: BibleSliderProps) {
 
       <button
         ref={nextRef}
-        className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 h-9 w-9 flex items-center justify-center rounded-full bg-white border border-neutral-20 shadow-md hover:shadow-lg hover:border-neutral-40 transition-all"
+        className="hidden sm:flex absolute -right-1 top-1/2 -translate-y-1/2 z-10 h-9 w-9 items-center justify-center rounded-full bg-white border border-neutral-20 shadow-md hover:shadow-lg hover:border-neutral-40 transition-all"
         aria-label="Next"
       >
         <ChevronRight className="h-4 w-4 text-neutral-60" />
@@ -138,7 +138,7 @@ export function BibleSlider({ bibles }: BibleSliderProps) {
       <Swiper
         modules={[Navigation, Pagination, Autoplay, A11y]}
         spaceBetween={16}
-        slidesPerView={2}
+        slidesPerView={1.2}
         navigation={{
           prevEl: prevRef.current,
           nextEl: nextRef.current,
@@ -153,7 +153,7 @@ export function BibleSlider({ bibles }: BibleSliderProps) {
         pagination={{ clickable: true, dynamicBullets: true }}
         loop={bibles.length > 4}
         breakpoints={{
-          480:  { slidesPerView: 2, spaceBetween: 16 },
+          400:  { slidesPerView: 2, spaceBetween: 16 },
           640:  { slidesPerView: 3, spaceBetween: 16 },
           900:  { slidesPerView: 4, spaceBetween: 20 },
           1200: { slidesPerView: 5, spaceBetween: 20 },

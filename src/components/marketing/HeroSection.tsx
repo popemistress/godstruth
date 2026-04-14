@@ -26,8 +26,8 @@ export function HeroSection() {
           </div>
         </div>
 
-        {/* Image collage */}
-        <div className="relative h-80 md:h-auto">
+        {/* Image collage — hidden on mobile to avoid overflow */}
+        <div className="hidden md:block relative h-80 md:h-auto">
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="relative w-full max-w-sm">
               {/* Stack of image cards */}
