@@ -238,12 +238,12 @@ function figureHtml(alt: string, src: string): string {
 }
 
 /**
- * Remove image lines from the lines array and return a map of
- * cleanLines-index → image html strings to inject after that heading line.
+ * Remove image lines from the lines array. Collect all images as a pool,
+ * then redistribute one image per every 4th heading so they are evenly spaced.
  */
 function extractImages(lines: string[]): {
   cleanLines: string[];
-  headingImages: Map<number, string[]>;
+  headingImages: Map<number, string>;
 } {
   function isHeadingLine(line: string): boolean {
     const t = line.trim();
@@ -251,32 +251,36 @@ function extractImages(lines: string[]): {
       line.startsWith("### ") || !!extractRomanHeading(t);
   }
 
+  // Collect all image lines and all heading positions (in original lines)
   const imageLineSet = new Set<number>();
-  const origHeadingImages = new Map<number, string[]>();
-  let lastHeadingOrig = -1;
+  const allImages: string[] = [];
+  const origHeadingLines: number[] = [];
 
   for (let li = 0; li < lines.length; li++) {
-    if (isHeadingLine(lines[li])) { lastHeadingOrig = li; continue; }
+    if (isHeadingLine(lines[li])) { origHeadingLines.push(li); continue; }
     const m = lines[li].trim().match(IMAGE_RE);
-    if (!m) continue;
-    imageLineSet.add(li);
-    const fig = figureHtml(m[1], m[2]);
-    if (lastHeadingOrig >= 0) {
-      if (!origHeadingImages.has(lastHeadingOrig)) origHeadingImages.set(lastHeadingOrig, []);
-      origHeadingImages.get(lastHeadingOrig)!.push(fig);
-    }
+    if (m) { imageLineSet.add(li); allImages.push(figureHtml(m[1], m[2])); }
   }
 
+  // Build cleanLines without image lines; track clean-index of each heading
   const cleanLines: string[] = [];
+  const headingCleanIndices: number[] = [];
   const origToClean = new Map<number, number>();
+
   for (let li = 0; li < lines.length; li++) {
-    if (!imageLineSet.has(li)) { origToClean.set(li, cleanLines.length); cleanLines.push(lines[li]); }
+    if (imageLineSet.has(li)) continue;
+    if (origHeadingLines.includes(li)) headingCleanIndices.push(cleanLines.length);
+    origToClean.set(li, cleanLines.length);
+    cleanLines.push(lines[li]);
   }
 
-  const headingImages = new Map<number, string[]>();
-  for (const [orig, figs] of origHeadingImages) {
-    const ci = origToClean.get(orig);
-    if (ci !== undefined) headingImages.set(ci, figs);
+  // Distribute: one image at every 4th heading (headings 4, 8, 12, …)
+  const headingImages = new Map<number, string>();
+  if (allImages.length > 0) {
+    const slots = headingCleanIndices.filter((_, hi) => (hi + 1) % 4 === 0);
+    slots.forEach((cleanIdx, si) => {
+      if (si < allImages.length) headingImages.set(cleanIdx, allImages[si]);
+    });
   }
 
   return { cleanLines, headingImages };
@@ -295,8 +299,8 @@ function parseMarkdown(md: string): string {
   let i = 0;
 
   function injectImages(lineIdx: number) {
-    const imgs = headingImages.get(lineIdx);
-    if (imgs) imgs.forEach((f) => html.push(f));
+    const img = headingImages.get(lineIdx);
+    if (img) html.push(img);
   }
 
   while (i < lines.length) {
@@ -477,9 +481,9 @@ function parseMarkdown(md: string): string {
           const bodyHtml = inline(caps.rest);
           listItems.push(`
             <li class="rounded-xl border border-gray-300 bg-gray-100 p-4 space-y-2">
-              <div class="flex flex-wrap items-start gap-2">
+              <div class="flex items-start gap-2">
                 <span class="flex-shrink-0 min-w-6 h-6 px-1.5 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center mt-0.5">${itemNum}</span>
-                ${capsLabelHtml(caps.label)}
+                <div class="flex-1 min-w-0">${capsLabelHtml(caps.label)}</div>
               </div>
               ${bodyHtml ? `<p class="text-gray-700 text-[15px] leading-relaxed pl-8">${bodyHtml}</p>` : ""}
             </li>`);
