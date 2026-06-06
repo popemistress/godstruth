@@ -277,7 +277,7 @@ function extractImages(lines: string[]): {
   // Distribute: one image at every 4th heading (headings 4, 8, 12, …)
   const headingImages = new Map<number, string>();
   if (allImages.length > 0) {
-    const slots = headingCleanIndices.filter((_, hi) => (hi + 1) % 4 === 0);
+    const slots = headingCleanIndices.filter((_, hi) => hi % 3 === 0);
     slots.forEach((cleanIdx, si) => {
       if (si < allImages.length) headingImages.set(cleanIdx, allImages[si]);
     });
