@@ -29,7 +29,7 @@ export const BOOK_MAP: Record<string, string> = {
   "prov": "Proverbs",     "prov.": "Proverbs",    "pr": "Proverbs",
   "eccl": "Ecclesiastes", "eccl.": "Ecclesiastes","ecc": "Ecclesiastes",
   "song": "Song of Solomon","sos": "Song of Solomon","ss": "Song of Solomon","cant": "Song of Solomon",
-  "isa": "Isaiah",        "isa.": "Isaiah",
+  "isa": "Isaiah",        "isa.": "Isaiah",       "is": "Isaiah",      "is.": "Isaiah",
   "jer": "Jeremiah",      "jer.": "Jeremiah",
   "lam": "Lamentations",  "lam.": "Lamentations",
   "ezek": "Ezekiel",      "ezek.": "Ezekiel",     "ez": "Ezekiel",
@@ -101,7 +101,7 @@ export function parseScriptureList(raw: string): ScriptureRef[] {
     // Try: optional-number + book-abbrev + chapter:verse[-end]
     // e.g. "1 Jn. 3:16-18" or "Mt. 7:7"
     const withBook = part.match(
-      /^((?:\d\s+)?[A-Za-z]+\.?)\s+(\d+:\d+(?:[–\-]\d+)?(?:,\s*\d+)?)/
+      /^((?:\d\s+)?[A-Za-z]+\.?)\s+(\d+:\d+(?:[–\-]\d+:\d+|[–\-]\d+)?(?:(?:,\s*\d+(?:[–\-]\d+)?)+)?)/
     );
     if (withBook) {
       const abbrev = withBook[1].toLowerCase().trim();
@@ -115,9 +115,31 @@ export function parseScriptureList(raw: string): ScriptureRef[] {
       }
     }
 
+    // Try: book + whole-chapter only (e.g. "Ps. 91", "Lev. 26") — update currentBook but no chip
+    const bookChapterOnly = part.match(/^((?:\d\s+)?[A-Za-z]+\.?)\s+(\d+)\s*$/);
+    if (bookChapterOnly) {
+      const abbrev = bookChapterOnly[1].toLowerCase().trim();
+      const book   = BOOK_MAP[abbrev];
+      if (book) {
+        currentBook = book;
+        continue;
+      }
+    }
+
+    // Try: book + chapter range (e.g. "Rom. 1-2") — update currentBook but no chip
+    const bookChapterRange = part.match(/^((?:\d\s+)?[A-Za-z]+\.?)\s+\d+-\d+\s*$/);
+    if (bookChapterRange) {
+      const abbrev = bookChapterRange[1].toLowerCase().trim();
+      const book   = BOOK_MAP[abbrev];
+      if (book) {
+        currentBook = book;
+        continue;
+      }
+    }
+
     // Try: bare chapter:verse[-end] — inherit currentBook
     // e.g. "18:19-20" or "15:7"
-    const bareVerse = part.match(/^(\d+:\d+(?:[–\-]\d+)?(?:,\s*\d+)?)/);
+    const bareVerse = part.match(/^(\d+:\d+(?:[–\-]\d+:\d+|[–\-]\d+)?(?:(?:,\s*\d+(?:[–\-]\d+)?)+)?)/);
     if (bareVerse && currentBook) {
       const verseRef = bareVerse[1].replace("–", "-").trim();
       const display  = `${currentBook} ${verseRef}`;

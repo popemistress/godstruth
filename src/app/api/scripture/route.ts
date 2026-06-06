@@ -30,40 +30,68 @@ function getEsvData(): Record<string, string> {
 
 /**
  * Look up one or more verses from a local verse map.
- * Handles: single verse, range (3:16-18), comma list (3:16,17).
+ * Handles: single verse, same-chapter range (3:16-18), cross-chapter range
+ * (3:16–4:5), comma-separated verses/ranges (3:16-18, 22, 25-27).
  */
 function lookup(ref: string, data: Record<string, string>): string | null {
   const normalized = ref
     .replace(/\s+/g, " ")
     .trim()
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .replace(/\bOf\b/g, "of"); // Book names keep lowercase "of" (e.g., "Song of Solomon")
 
   if (data[normalized]) return data[normalized];
 
-  // Range: "Book Ch:Start-End"
-  const rangeMatch = normalized.match(/^(.+?\s+\d+):(\d+)[–\-](\d+)$/);
-  if (rangeMatch) {
-    const prefix = rangeMatch[1];
-    const start  = parseInt(rangeMatch[2], 10);
-    const end    = parseInt(rangeMatch[3], 10);
-    const parts  = [];
-    for (let v = start; v <= end; v++) {
-      const t = data[`${prefix}:${v}`];
-      if (t) parts.push(t);
+  // Extract "Book Name Ch" prefix and verse spec after the first colon
+  const prefixMatch = normalized.match(/^(.+?\s+)(\d+):(.+)$/);
+  if (!prefixMatch) return null;
+
+  const bookName   = prefixMatch[1].trim();
+  const chapterStr = prefixMatch[2];
+  const verseSpec  = prefixMatch[3];
+  const chapterNum = parseInt(chapterStr, 10);
+  const chapPrefix = `${bookName} ${chapterStr}`;
+
+  // Cross-chapter range: "startV–endCh:endV" e.g. "3–2:25" means ch:3 through ch2:v25
+  const crossChapter = verseSpec.match(/^(\d+)[–\-](\d+):(\d+)$/);
+  if (crossChapter) {
+    const startV = parseInt(crossChapter[1], 10);
+    const endCh  = parseInt(crossChapter[2], 10);
+    const endV   = parseInt(crossChapter[3], 10);
+    const parts: string[] = [];
+    for (let ch = chapterNum; ch <= endCh; ch++) {
+      const cp = `${bookName} ${ch}`;
+      const sv = ch === chapterNum ? startV : 1;
+      const ev = ch === endCh      ? endV   : 200;
+      for (let v = sv; v <= ev; v++) {
+        const t = data[`${cp}:${v}`];
+        if (t) parts.push(t);
+      }
     }
     if (parts.length) return parts.join(" ");
   }
 
-  // Comma list: "Book Ch:V1,V2"
-  const commaMatch = normalized.match(/^(.+?\s+\d+):(\d+(?:,\s*\d+)+)$/);
-  if (commaMatch) {
-    const prefix = commaMatch[1];
-    const parts  = commaMatch[2]
-      .split(",")
-      .map((n) => data[`${prefix}:${parseInt(n.trim(), 10)}`])
-      .filter(Boolean) as string[];
-    if (parts.length) return parts.join(" ");
+  // Comma/range spec within same chapter: e.g. "4-6, 10, 12-14"
+  const segments = verseSpec.split(",").map((s) => s.trim());
+  const parts: string[] = [];
+  for (const seg of segments) {
+    const range = seg.match(/^(\d+)[–\-](\d+)$/);
+    if (range) {
+      const s = parseInt(range[1], 10);
+      const e = parseInt(range[2], 10);
+      for (let v = s; v <= e; v++) {
+        const t = data[`${chapPrefix}:${v}`];
+        if (t) parts.push(t);
+      }
+    } else {
+      const v = parseInt(seg, 10);
+      if (!isNaN(v)) {
+        const t = data[`${chapPrefix}:${v}`];
+        if (t) parts.push(t);
+      }
+    }
   }
+  if (parts.length) return parts.join(" ");
 
   return null;
 }
