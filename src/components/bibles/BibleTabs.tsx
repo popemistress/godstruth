@@ -277,6 +277,61 @@ function VerseOmissionsContent() {
         </div>
       </div>
 
+      {/* Canon vs. Textual Criticism explainer */}
+      <div className="space-y-4">
+        <h3 className="font-serif text-xl font-bold text-neutral-80">
+          Canon and Textual Criticism: Two Different Questions
+        </h3>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <p className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-1">Canon asks</p>
+            <p className="text-blue-900 text-sm font-medium">Which books belong in Scripture?</p>
+          </div>
+          <div className="bg-violet-50 border border-violet-200 rounded-xl p-4">
+            <p className="text-xs font-bold text-violet-700 uppercase tracking-wider mb-1">Textual Criticism asks</p>
+            <p className="text-violet-900 text-sm font-medium">What exact wording most likely belongs in those books?</p>
+          </div>
+        </div>
+        <div className="bg-neutral-05 border border-neutral-20 rounded-xl p-5 space-y-3 text-sm text-neutral-60 leading-relaxed">
+          <p>
+            The Sanhedrin did not canonize the Christian Bible. It did not decide the New Testament.
+            The Old Testament canon developed within Israel and Jewish tradition over time. The New
+            Testament canon was recognized by the early church over time, especially as apostolic
+            writings were received, copied, read publicly, and defended against false writings.
+            Councils and church leaders helped <em>recognize</em> the books, but they were not voting
+            verse-by-verse on every textual variant.
+          </p>
+          <p>
+            Nobody in the early church was asking, &ldquo;Should Matthew 17:21 be verse 21?&rdquo; — because
+            modern chapter and verse divisions came much later. The original question would have
+            been: <em>&ldquo;Was this sentence part of Matthew&apos;s original text?&rdquo;</em> That question
+            belongs to textual criticism.
+          </p>
+          <p>
+            Textual critics compare Greek manuscripts, ancient translations, quotations by early
+            church fathers, scribal habits, and internal evidence. They ask which reading best
+            explains how the others arose. Modern Greek New Testament editions like NA28 and UBS5
+            make these judgments, and Bible translation committees decide whether a disputed reading
+            should go in the main text, brackets, or footnotes.
+          </p>
+          <p>
+            No single person today has authority to &ldquo;canonize verses.&rdquo; Instead, scholars and
+            translators weigh the manuscript evidence. Different traditions reach different
+            conclusions:
+          </p>
+          <ul className="space-y-1 pl-4 border-l-2 border-neutral-20">
+            <li>The <strong className="text-neutral-80">KJV and Textus Receptus</strong> tradition keeps Matthew 17:21.</li>
+            <li>The <strong className="text-neutral-80">Majority Text / Byzantine</strong> tradition usually keeps it.</li>
+            <li>The <strong className="text-neutral-80">modern critical-text</strong> tradition usually omits or footnotes it.</li>
+          </ul>
+          <p>
+            That does not mean one side believes in prayer and fasting and the other does not. It
+            means they disagree about whether Matthew originally wrote that sentence in that
+            location.
+          </p>
+        </div>
+      </div>
+
       {/* Standard omissions table */}
       <div>
         <h3 className="font-serif text-xl font-bold text-neutral-80 mb-2">
