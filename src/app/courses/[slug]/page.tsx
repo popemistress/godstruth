@@ -64,7 +64,15 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
   if (!course) notFound();
 
-  const totalLessons = course.chapters.reduce((a, ch) => a + ch.lessons.length, 0);
+  const lessonCount = course.chapters.reduce(
+    (a, ch) => a + ch.lessons.filter((lesson) => lesson.type !== "SUPPLEMENT" && lesson.type !== "IMAGE").length,
+    0
+  );
+  const supplementCount = course.chapters.reduce(
+    (a, ch) => a + ch.lessons.filter((lesson) => lesson.type === "SUPPLEMENT").length,
+    0
+  );
+  const sectionCount = course.chapters.reduce((a, ch) => a + ch.lessons.length, 0);
   const totalDuration = course.chapters.reduce(
     (a, ch) => a + ch.lessons.reduce((b, l) => b + (l.duration ?? 0), 0),
     0
@@ -97,7 +105,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold uppercase tracking-wider px-3 py-1.5 rounded-full mb-6">
               <GraduationCap className="h-3.5 w-3.5" />
-              Free Course · 52 Lessons
+              Free Course · {lessonCount} Lesson{lessonCount === 1 ? "" : "s"}
             </div>
 
             <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4">
@@ -118,8 +126,14 @@ export default async function CourseDetailPage({ params }: PageProps) {
               </span>
               <span className="flex items-center gap-1.5">
                 <Play className="h-4 w-4 text-emerald-500" />
-                {totalLessons} lessons
+                {lessonCount} lessons
               </span>
+              {supplementCount > 0 && (
+                <span className="flex items-center gap-1.5">
+                  <BookOpen className="h-4 w-4 text-violet-500" />
+                  {supplementCount} supplements
+                </span>
+              )}
               {totalHours && (
                 <span className="flex items-center gap-1.5">
                   <Clock className="h-4 w-4 text-emerald-500" />
@@ -171,7 +185,8 @@ export default async function CourseDetailPage({ params }: PageProps) {
               <div className="flex items-center justify-between mb-5">
                 <h2 className="font-serif text-xl font-bold text-gray-900">Course Content</h2>
                 <span className="text-xs text-gray-400">
-                  {course.chapters.length} parts · {totalLessons} lessons
+                  {course.chapters.length} parts · {lessonCount} lessons
+                  {supplementCount > 0 && ` · ${supplementCount} supplements`}
                 </span>
               </div>
               <ChapterList chapters={course.chapters} courseSlug={course.slug} />
@@ -189,10 +204,10 @@ export default async function CourseDetailPage({ params }: PageProps) {
                 <div>
                   <p className="text-sm font-semibold text-gray-900">Your Progress</p>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    0 of {totalLessons} lessons complete
+                    0 of {sectionCount} sections complete
                   </p>
                   <p className="text-xs text-gray-300 mt-0.5">
-                    {course.chapters.length} parts · 52 lessons total
+                    {course.chapters.length} parts · {lessonCount} lessons total
                   </p>
                 </div>
               </div>
@@ -213,7 +228,10 @@ export default async function CourseDetailPage({ params }: PageProps) {
               <div className="mt-4 space-y-3 pt-4 border-t border-gray-100">
                 {[
                   { icon: BookOpen, label: `${course.chapters.length} Parts (I–IV)` },
-                  { icon: Play, label: `${totalLessons} Lessons` },
+                  { icon: Play, label: `${lessonCount} Lessons` },
+                  ...(supplementCount > 0
+                    ? [{ icon: BookOpen, label: `${supplementCount} Supplements` }]
+                    : []),
                   { icon: Clock, label: totalHours ? `~${totalHours} hours` : "Self-paced" },
                   { icon: Users, label: "Community access" },
                   { icon: Star, label: "Free forever" },

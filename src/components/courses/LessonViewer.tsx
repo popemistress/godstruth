@@ -116,7 +116,7 @@ export function LessonViewer({
         <motion.div variants={fadeUp}>
           <div className="flex items-center justify-between text-xs text-gray-400 mb-1.5">
             <span>{chapter.title}</span>
-            <span>{lessonIndex + 1} / {totalLessons} lessons</span>
+            <span>{lessonIndex + 1} / {totalLessons} sections</span>
           </div>
           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <motion.div

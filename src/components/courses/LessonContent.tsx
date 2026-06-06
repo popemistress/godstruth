@@ -27,6 +27,59 @@ function escAttr(str: string) {
   return str.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 }
 
+function normalizeMarkdown(md: string): string {
+  return md
+    .replace(/\r\n?/g, "\n")
+    .replace(/\u00a0/g, " ")
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+$/g, ""))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function normalizeInlineText(text: string): string {
+  return text
+    .replace(/\u00a0/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([,.;:!?])/g, "$1")
+    .replace(/([([{])\s+/g, "$1")
+    .replace(/\s+([)\]}])/g, "$1")
+    .replace(/\bortime\b/gi, "or time")
+    .trim();
+}
+
+function titleCaseHeading(raw: string): string {
+  const smallWords = new Set([
+    "a", "an", "and", "as", "at", "but", "by", "for", "from", "in", "into",
+    "nor", "of", "on", "or", "the", "to", "with",
+  ]);
+  const text = normalizeInlineText(raw);
+  const words = text.split(" ");
+
+  return words
+    .map((word, index) => {
+      const lower = word.toLowerCase();
+      const isEdge = index === 0 || index === words.length - 1;
+      if (!isEdge && smallWords.has(lower)) return lower;
+      if (/^[IVX]+\.?$/i.test(word) || (/^[A-Z0-9]{2,}$/.test(word) && !smallWords.has(lower))) {
+        return word;
+      }
+      return lower.replace(/(^|[-—–]|[^A-Za-z0-9])([a-z])/g, (_, sep, c) => `${sep}${c.toUpperCase()}`);
+    })
+    .join(" ");
+}
+
+function isStandaloneSubheading(text: string): boolean {
+  if (text.length < 12 || text.length > 90) return false;
+  if (/[.!?:;]$/.test(text)) return false;
+  if (/[()]/.test(text)) return false;
+  if (/^(and|but|or|for|then|thus|therefore|because|if|when|while)\b/i.test(text)) return false;
+  const words = text.split(/\s+/);
+  if (words.length < 3 || words.length > 12) return false;
+  return /^[A-Z0-9]/.test(text) && words.some((word) => /^[A-Z]/.test(word));
+}
+
 const CHIP_CLASS =
   "scripture-chip inline-flex items-center text-emerald-700 bg-emerald-50 " +
   "border border-emerald-200 px-1.5 py-0.5 rounded-md text-[11px] font-semibold " +
@@ -94,7 +147,7 @@ function scriptureChips(text: string): string {
  * Apply inline markdown + scripture chips to a raw string.
  */
 function inline(raw: string): string {
-  const escaped = escHtml(raw);
+  const escaped = escHtml(normalizeInlineText(raw));
   const bolded = escaped
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
@@ -144,6 +197,17 @@ function extractParenSubItem(
   return { num: match[1], rest: match[2] ?? "" };
 }
 
+function extractRomanHeading(
+  text: string
+): { rn: string; title: string } | null {
+  const match = text.match(/^([IVX]{1,6})\.\s+(.*)/i);
+  if (!match) return null;
+  const rn = match[1].toUpperCase();
+  const validRoman = /^(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII)$/;
+  if (!validRoman.test(rn)) return null;
+  return { rn, title: match[2] ?? "" };
+}
+
 // ─── Badge / pill HTML helpers ────────────────────────────────────────────────
 
 function capsLabelHtml(label: string): string {
@@ -161,7 +225,7 @@ function parenNumHtml(num: string): string {
 // ─── Core parser ─────────────────────────────────────────────────────────────
 
 function parseMarkdown(md: string): string {
-  const lines = md.split("\n");
+  const lines = normalizeMarkdown(md).split("\n");
   const html: string[] = [];
   let i = 0;
 
@@ -192,12 +256,10 @@ function parseMarkdown(md: string): string {
       const rnMatch = raw.match(/^([IVXivx]+)\.\s*(.*)/i);
       if (rnMatch) {
         const rn = rnMatch[1].toUpperCase();
-        const title = inline(
-          rnMatch[2].replace(/^the\s+/i, "").replace(/\b\w/g, (c) => c.toUpperCase())
-        );
+        const title = inline(titleCaseHeading(rnMatch[2]));
         html.push(`
           <div class="flex items-start gap-4 mt-12 mb-6">
-            <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center shadow-sm shadow-emerald-500/30">
+            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center shadow-sm shadow-emerald-500/30">
               <span class="text-white text-xs font-black tracking-tight">${escHtml(rn)}</span>
             </div>
             <div class="flex-1 pt-1.5">
@@ -314,7 +376,7 @@ function parseMarkdown(md: string): string {
         i++;
       }
       html.push(
-        `<ul class="space-y-2 my-4 pl-1">${listItems.join("")}</ul>`
+        `<ul class="space-y-2 my-5 pl-1">${listItems.join("")}</ul>`
       );
       continue;
     }
@@ -322,10 +384,10 @@ function parseMarkdown(md: string): string {
     // ── Ordered list ─────────────────────────────────────────────────────────
     if (line.match(/^\d+\. /)) {
       const listItems: string[] = [];
-      let itemNum = 0;
       while (i < lines.length && lines[i].match(/^\d+\. /)) {
-        itemNum++;
-        const text = lines[i].replace(/^\d+\. /, "");
+        const itemMatch = lines[i].match(/^(\d+)\.\s+(.*)/s);
+        const itemNum = itemMatch?.[1] ?? "";
+        const text = itemMatch?.[2] ?? lines[i].replace(/^\d+\. /, "");
         const caps = extractCapsLabel(text);
 
         if (caps) {
@@ -334,7 +396,7 @@ function parseMarkdown(md: string): string {
           listItems.push(`
             <li class="rounded-xl border border-gray-100 bg-gray-50/60 p-4 space-y-2">
               <div class="flex items-center gap-2">
-                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center">${itemNum}</span>
+                <span class="flex-shrink-0 min-w-6 h-6 px-1.5 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center">${itemNum}</span>
                 ${capsLabelHtml(caps.label)}
               </div>
               ${bodyHtml ? `<p class="text-gray-700 text-[15px] leading-relaxed pl-8">${bodyHtml}</p>` : ""}
@@ -343,7 +405,7 @@ function parseMarkdown(md: string): string {
           // Normal numbered item
           listItems.push(`
             <li class="flex items-start gap-3">
-              <span class="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-[11px] font-bold flex items-center justify-center mt-0.5">${itemNum}</span>
+              <span class="flex-shrink-0 min-w-6 h-6 px-1.5 rounded-full bg-gray-100 text-gray-600 text-[11px] font-bold flex items-center justify-center mt-0.5">${itemNum}</span>
               <span class="text-gray-800 text-[15px] leading-relaxed flex-1">${inline(text)}</span>
             </li>`);
         }
@@ -362,7 +424,7 @@ function parseMarkdown(md: string): string {
         }
       }
       html.push(
-        `<ol class="space-y-3 my-5">${listItems.join("")}</ol>`
+        `<ol class="space-y-3 my-6">${listItems.join("")}</ol>`
       );
       continue;
     }
@@ -487,6 +549,37 @@ function parseMarkdown(md: string): string {
       const trimmed = para.trim();
       if (!trimmed) continue;
 
+      if (/^(Lesson|Supplement)\s+[\w-]+$/i.test(trimmed)) {
+        html.push(`
+          <p class="mt-8 mb-2 text-[11px] font-black uppercase tracking-[0.22em] text-emerald-700">
+            ${escHtml(normalizeInlineText(trimmed))}
+          </p>`);
+        continue;
+      }
+
+      if (/^For Lessons?\b/i.test(trimmed)) {
+        html.push(`
+          <p class="mt-1 mb-6 text-sm font-semibold text-gray-500 leading-relaxed">
+            ${inline(trimmed)}
+          </p>`);
+        continue;
+      }
+
+      const romanHeading = extractRomanHeading(trimmed);
+      if (romanHeading) {
+        html.push(`
+          <div class="flex items-start gap-4 mt-12 mb-6">
+            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center shadow-sm shadow-emerald-500/30">
+              <span class="text-white text-xs font-black tracking-tight">${escHtml(romanHeading.rn)}</span>
+            </div>
+            <div class="flex-1 pt-1.5">
+              <h2 class="font-serif text-xl font-bold text-gray-900 leading-snug">${inline(titleCaseHeading(romanHeading.title))}</h2>
+              <div class="mt-2 h-0.5 bg-gradient-to-r from-emerald-200 to-transparent rounded-full"></div>
+            </div>
+          </div>`);
+        continue;
+      }
+
       // (1) CAPS LABEL. body text
       const parenSub = extractParenSubItem(trimmed);
       if (parenSub) {
@@ -524,8 +617,9 @@ function parseMarkdown(md: string): string {
       // PART I / PART II header lines (course intro)
       if (/^PART\s+(I{1,3}V?|VI{0,3}|IV|IX|V)\s+/i.test(trimmed)) {
         html.push(`
-          <div class="my-1 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-800 text-sm font-semibold">
-            ${escHtml(trimmed)}
+          <div class="my-2 flex items-start gap-3 rounded-lg bg-emerald-50 border border-emerald-100 px-4 py-3 text-emerald-900">
+            <span class="shrink-0 text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">${escHtml(trimmed.match(/^PART\s+\S+/i)?.[0] ?? "Part")}</span>
+            <span class="text-sm font-semibold leading-snug">${escHtml(normalizeInlineText(trimmed.replace(/^PART\s+\S+\s*/i, "")))}</span>
           </div>`);
         continue;
       }
@@ -542,10 +636,18 @@ function parseMarkdown(md: string): string {
         continue;
       }
 
+      if (isStandaloneSubheading(trimmed)) {
+        html.push(`
+          <h3 class="font-serif text-lg font-bold text-gray-900 mt-9 mb-3 leading-snug">
+            ${inline(trimmed)}
+          </h3>`);
+        continue;
+      }
+
       // Normal paragraph — auto-split very long paragraphs at major sentence breaks
       const rendered = inline(trimmed);
       html.push(
-        `<p class="text-gray-800 text-[15px] leading-[1.85] my-4">${rendered}</p>`
+        `<p class="text-gray-800 text-[15px] sm:text-base leading-[1.85] my-5">${rendered}</p>`
       );
     }
   }
@@ -620,7 +722,7 @@ export function LessonContent({ content, lessonId, className }: LessonContentPro
   return (
     <div
       ref={containerRef}
-      className={cn("lesson-prose max-w-none", className)}
+      className={cn("lesson-prose mx-auto w-full max-w-[72ch] text-left", className)}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

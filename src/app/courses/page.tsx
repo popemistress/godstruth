@@ -26,7 +26,7 @@ export default async function CoursesPage({ searchParams }: PageProps) {
       chapters: {
         orderBy: { order: "asc" },
         include: {
-          lessons: { select: { id: true }, orderBy: { order: "asc" } },
+          lessons: { select: { id: true, type: true }, orderBy: { order: "asc" } },
         },
       },
     },
@@ -34,7 +34,13 @@ export default async function CoursesPage({ searchParams }: PageProps) {
   });
 
   const totalLessons = courses.reduce(
-    (acc, c) => acc + c.chapters.reduce((a, ch) => a + ch.lessons.length, 0),
+    (acc, c) =>
+      acc +
+      c.chapters.reduce(
+        (a, ch) =>
+          a + ch.lessons.filter((lesson) => lesson.type !== "SUPPLEMENT" && lesson.type !== "IMAGE").length,
+        0
+      ),
     0
   );
 

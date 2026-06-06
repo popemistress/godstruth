@@ -12,12 +12,15 @@ import type { Content, CourseChapter } from "@prisma/client";
 
 interface CourseCardProps {
   course: Content & {
-    chapters: (CourseChapter & { lessons: { id: string }[] })[];
+    chapters: (CourseChapter & { lessons: { id: string; type: string }[] })[];
   };
 }
 
 export function CourseCard({ course }: CourseCardProps) {
-  const totalLessons = course.chapters.reduce((acc, ch) => acc + ch.lessons.length, 0);
+  const totalLessons = course.chapters.reduce(
+    (acc, ch) => acc + ch.lessons.filter((lesson) => lesson.type !== "SUPPLEMENT" && lesson.type !== "IMAGE").length,
+    0
+  );
   const chapterCount = course.chapters.length;
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [scale, setScale] = useState(1);
@@ -89,7 +92,7 @@ export function CourseCard({ course }: CourseCardProps) {
             </span>
             {chapterCount > 0 && (
               <span className="text-[10px] text-gray-400 font-medium">
-                {chapterCount} parts · {totalLessons} lessons
+                {chapterCount} parts · {totalLessons} lesson{totalLessons === 1 ? "" : "s"}
               </span>
             )}
           </div>
