@@ -4,15 +4,15 @@
  * ScriptureTooltipProvider
  *
  * Wraps lesson/supplement content, intercepts hover/click on [data-scripture]
- * chips, and shows a floating tooltip with KJV and ESV translations.
- * Hover over the KJV / ESV pill in the header to switch translations.
+ * chips, and shows a floating tooltip with KJV and BSB translations.
+ * Hover over the KJV / BSB pill in the header to switch translations.
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { BookOpen, X, Loader2, AlertCircle } from "lucide-react";
 
-type Translation = "kjv" | "esv";
+type Translation = "kjv" | "bsb";
 
 // ── Per-translation fetch state ───────────────────────────────────────────────
 
@@ -33,7 +33,7 @@ interface TooltipState {
   above:  boolean;
   active: Translation;
   kjv:    TranslationState;
-  esv:    TranslationState;
+  bsb:    TranslationState;
 }
 
 // ── Module-level cache: "ref:translation" → text ─────────────────────────────
@@ -159,10 +159,10 @@ function Tooltip({
               onActivate={() => onSwitchTranslation("kjv")}
             />
             <TranslationPill
-              label="ESV"
-              active={state.active === "esv"}
-              loading={state.esv.loading}
-              onActivate={() => onSwitchTranslation("esv")}
+              label="BSB"
+              active={state.active === "bsb"}
+              loading={state.bsb.loading}
+              onActivate={() => onSwitchTranslation("bsb")}
             />
           </div>
 
@@ -202,7 +202,7 @@ function Tooltip({
         {/* ── Footer: translation label ── */}
         <div className="px-4 pb-3 -mt-1">
           <p className="text-[10px] text-gray-400">
-            {state.active === "kjv" ? "King James Version" : "English Standard Version"}
+            {state.active === "kjv" ? "King James Version" : "Berean Standard Bible"}
           </p>
         </div>
       </div>
@@ -267,7 +267,7 @@ export function ScriptureTooltipProvider({ children }: { children: React.ReactNo
       ref, x: midX, y, above,
       active: "kjv",
       kjv: { text: null, loading: true,  error: null },
-      esv: { text: null, loading: false, error: null },
+      bsb: { text: null, loading: false, error: null },
     });
 
     try {
@@ -287,7 +287,7 @@ export function ScriptureTooltipProvider({ children }: { children: React.ReactNo
     }
   }, []);
 
-  // Switch active translation (triggered by hovering/clicking KJV or ESV pill)
+  // Switch active translation (triggered by hovering/clicking KJV or BSB pill)
   const switchTranslation = useCallback((t: Translation) => {
     setTooltip(prev => {
       if (!prev) return prev;

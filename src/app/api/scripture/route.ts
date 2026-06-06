@@ -3,16 +3,16 @@ import path from "path";
 import fs from "fs";
 
 /**
- * GET /api/scripture?ref=John+3:16&translation=kjv|esv
+ * GET /api/scripture?ref=John+3:16&translation=kjv|bsb
  *
- * Both translations are served from local epub extracts — no external APIs.
- * - KJV: data/kjv-verses.json  (extracted from kjv.epub)
- * - ESV: data/esv-verses.json  (extracted from ESV.epub)
+ * Both translations are served from local verse maps — no external APIs.
+ * - KJV: data/kjv-verses.json  (31,102 verses — public domain)
+ * - BSB: data/bsb-verses.json  (31,102 verses — Berean Standard Bible, CC BY)
  */
 
 // Module-level caches — each loaded once per server process
 let kjvCache: Record<string, string> | null = null;
-let esvCache: Record<string, string> | null = null;
+let bsbCache: Record<string, string> | null = null;
 
 function loadJson(filename: string): Record<string, string> {
   const file = path.join(process.cwd(), "data", filename);
@@ -24,8 +24,8 @@ function getKjvData(): Record<string, string> {
   return (kjvCache ??= loadJson("kjv-verses.json"));
 }
 
-function getEsvData(): Record<string, string> {
-  return (esvCache ??= loadJson("esv-verses.json"));
+function getBsbData(): Record<string, string> {
+  return (bsbCache ??= loadJson("bsb-verses.json"));
 }
 
 /**
@@ -107,7 +107,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Missing ref" }, { status: 400 });
   }
 
-  const data = translation === "esv" ? getEsvData() : getKjvData();
+  const data = translation === "bsb" ? getBsbData() : getKjvData();
   const text = lookup(ref, data);
 
   if (!text) {
