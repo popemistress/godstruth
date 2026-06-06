@@ -235,6 +235,7 @@ model CourseLesson {
   videoUrl   String?                            // embeddable video URL (YouTube, Vimeo, etc.)
   audioUrl   String?                            // podcast / audio file URL
   content    String?                            // rich text / markdown content
+  coverUrl   String?                            // UploadThing header image URL
   published  Boolean       @default(true)
   chapter    CourseChapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
 
