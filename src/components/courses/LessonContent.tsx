@@ -288,9 +288,40 @@ function extractImages(lines: string[]): {
 
 // ─── Core parser ─────────────────────────────────────────────────────────────
 
+/**
+ * Strip all leading header/title lines that duplicate what the lesson banner already shows.
+ * Handles every observed format across all 52 lessons + 26 supplements.
+ */
+function stripLeadingHeaders(md: string): string {
+  const lines = md.split("\n");
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    // Blank lines and horizontal rules — always skip
+    if (line === "" || /^[-*_]{3,}$/.test(line)) { i++; continue; }
+    // "N. ALL CAPS TITLE" — e.g. "9. THE DISPENSATION OF INNOCENCE"
+    if (/^\d+\.\s+[A-Z][A-Z\s\-&'''':,–]+$/.test(line)) { i++; continue; }
+    // "LESSON ONE" / "LESSON TWO" … / "LESSON FIFTY-TWO"
+    if (/^LESSON\s+[A-Z-]+$/i.test(line)) { i++; continue; }
+    // "Supplement Five" / "Supplement Twenty-Six"
+    if (/^Supplement\s+[A-Za-z-]+$/i.test(line)) { i++; continue; }
+    // "For Lessons Nine and Ten" / "For Lesson …"
+    if (/^For Lessons?\s+/i.test(line)) { i++; continue; }
+    // "PART I: …" / "PART IV: …"
+    if (/^PART\s+[IVX]+\s*:/i.test(line)) { i++; continue; }
+    // "(LESSONS 19–36)" parenthetical range
+    if (/^\(LESSONS?\s+\d+[–\-]\d+\)/i.test(line)) { i++; continue; }
+    // Pure all-caps title line (excludes roman-numeral headings like "I. SECTION")
+    // ’ = right single quotation mark (typographic apostrophe in EPUB-sourced content)
+    if (/^[A-Z][A-Z\s\-&''‘’:,–?()/]+$/.test(line) && !/^[IVX]{1,6}\.\s/.test(line)) { i++; continue; }
+    // First line that doesn't match → actual content starts here
+    break;
+  }
+  return lines.slice(i).join("\n");
+}
+
 function parseMarkdown(md: string): string {
-  // Strip leading "N. LESSON TITLE IN CAPS" line (redundant with the lesson banner header)
-  const stripped = md.replace(/^[ \t]*\d+\.\s+[A-Z][A-Z\s\-&':,–]+[ \t]*\n/, "");
+  const stripped = stripLeadingHeaders(md);
 
   const rawLines = normalizeMarkdown(stripped).split("\n");
   const { cleanLines, headingImages } = extractImages(rawLines);
