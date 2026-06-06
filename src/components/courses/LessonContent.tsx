@@ -211,7 +211,7 @@ function extractRomanHeading(
 // ─── Badge / pill HTML helpers ────────────────────────────────────────────────
 
 function capsLabelHtml(label: string): string {
-  return `<span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full mr-2 align-middle flex-shrink-0">${escHtml(label)}</span>`;
+  return `<span class="inline text-[10px] font-black uppercase tracking-widest text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded mr-2 leading-relaxed">${escHtml(label)}</span>`;
 }
 
 function alphaBadgeHtml(letter: string): string {
@@ -477,8 +477,8 @@ function parseMarkdown(md: string): string {
           const bodyHtml = inline(caps.rest);
           listItems.push(`
             <li class="rounded-xl border border-gray-300 bg-gray-100 p-4 space-y-2">
-              <div class="flex items-center gap-2">
-                <span class="flex-shrink-0 min-w-6 h-6 px-1.5 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center">${itemNum}</span>
+              <div class="flex flex-wrap items-start gap-2">
+                <span class="flex-shrink-0 min-w-6 h-6 px-1.5 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center mt-0.5">${itemNum}</span>
                 ${capsLabelHtml(caps.label)}
               </div>
               ${bodyHtml ? `<p class="text-gray-700 text-[15px] leading-relaxed pl-8">${bodyHtml}</p>` : ""}
