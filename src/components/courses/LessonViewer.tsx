@@ -187,10 +187,6 @@ export function LessonViewer({
             )}
           </div>
 
-          <h1 className="font-serif text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
-            {lesson.title}
-          </h1>
-
           {lesson.duration && (
             <p className="flex items-center gap-1.5 text-sm text-gray-400">
               <Clock className="h-3.5 w-3.5" />

@@ -222,27 +222,90 @@ function parenNumHtml(num: string): string {
   return `<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 text-gray-700 text-[10px] font-black mr-2 flex-shrink-0 align-middle">${num}</span>`;
 }
 
+// ─── Image helpers ────────────────────────────────────────────────────────────
+
+const IMAGE_RE = /^!\[([^\]]*)\]\(([^)]+)\)$/;
+
+function figureHtml(alt: string, src: string): string {
+  const a = escHtml(alt);
+  const s = escAttr(src);
+  return `
+    <figure class="my-6 -mx-2 sm:-mx-6 lesson-lightbox-trigger cursor-zoom-in group" data-lightbox-src="${s}">
+      <img src="${s}" alt="${a}" loading="lazy"
+        class="w-full rounded-xl shadow-md object-cover max-h-[420px] border-4 border-amber-400 group-hover:border-amber-500 transition-colors duration-200 pointer-events-none" />
+      ${a ? `<figcaption class="mt-2 text-center text-xs text-gray-400 italic">${a}</figcaption>` : ""}
+    </figure>`;
+}
+
+/**
+ * Remove image lines from the lines array and return a map of
+ * cleanLines-index → image html strings to inject after that heading line.
+ */
+function extractImages(lines: string[]): {
+  cleanLines: string[];
+  headingImages: Map<number, string[]>;
+} {
+  function isHeadingLine(line: string): boolean {
+    const t = line.trim();
+    return line.startsWith("# ") || line.startsWith("## ") ||
+      line.startsWith("### ") || !!extractRomanHeading(t);
+  }
+
+  const imageLineSet = new Set<number>();
+  const origHeadingImages = new Map<number, string[]>();
+  let lastHeadingOrig = -1;
+
+  for (let li = 0; li < lines.length; li++) {
+    if (isHeadingLine(lines[li])) { lastHeadingOrig = li; continue; }
+    const m = lines[li].trim().match(IMAGE_RE);
+    if (!m) continue;
+    imageLineSet.add(li);
+    const fig = figureHtml(m[1], m[2]);
+    if (lastHeadingOrig >= 0) {
+      if (!origHeadingImages.has(lastHeadingOrig)) origHeadingImages.set(lastHeadingOrig, []);
+      origHeadingImages.get(lastHeadingOrig)!.push(fig);
+    }
+  }
+
+  const cleanLines: string[] = [];
+  const origToClean = new Map<number, number>();
+  for (let li = 0; li < lines.length; li++) {
+    if (!imageLineSet.has(li)) { origToClean.set(li, cleanLines.length); cleanLines.push(lines[li]); }
+  }
+
+  const headingImages = new Map<number, string[]>();
+  for (const [orig, figs] of origHeadingImages) {
+    const ci = origToClean.get(orig);
+    if (ci !== undefined) headingImages.set(ci, figs);
+  }
+
+  return { cleanLines, headingImages };
+}
+
 // ─── Core parser ─────────────────────────────────────────────────────────────
 
 function parseMarkdown(md: string): string {
-  const lines = normalizeMarkdown(md).split("\n");
+  // Strip leading "N. LESSON TITLE IN CAPS" line (redundant with the lesson banner header)
+  const stripped = md.replace(/^[ \t]*\d+\.\s+[A-Z][A-Z\s\-&':,–]+[ \t]*\n/, "");
+
+  const rawLines = normalizeMarkdown(stripped).split("\n");
+  const { cleanLines, headingImages } = extractImages(rawLines);
+  const lines = cleanLines;
   const html: string[] = [];
   let i = 0;
+
+  function injectImages(lineIdx: number) {
+    const imgs = headingImages.get(lineIdx);
+    if (imgs) imgs.forEach((f) => html.push(f));
+  }
 
   while (i < lines.length) {
     const line = lines[i];
 
-    // ── Lesson image  ![alt](url) ────────────────────────────────────────────
-    if (/^!\[([^\]]*)\]\(([^)]+)\)$/.test(line.trim())) {
-      const m = line.trim().match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
-      const alt = escHtml(m![1]);
-      const src = escAttr(m![2]);
-      html.push(`
-        <figure class="my-8 -mx-2 sm:-mx-6 lesson-lightbox-trigger cursor-zoom-in group" data-lightbox-src="${src}">
-          <img src="${src}" alt="${alt}" loading="lazy"
-            class="w-full rounded-xl shadow-md object-cover max-h-[420px] border-4 border-amber-400 group-hover:border-amber-500 transition-colors duration-200 pointer-events-none" />
-          ${alt ? `<figcaption class="mt-2 text-center text-xs text-gray-400 italic">${alt}</figcaption>` : ""}
-        </figure>`);
+    // ── Lesson image  ![alt](url) — fallback for any not pre-extracted ───────
+    if (IMAGE_RE.test(line.trim())) {
+      const m = line.trim().match(IMAGE_RE)!;
+      html.push(figureHtml(m[1], m[2]));
       i++;
       continue;
     }
@@ -254,6 +317,7 @@ function parseMarkdown(md: string): string {
         <div class="mb-8 pb-6 border-b-2 border-emerald-100">
           <h1 class="font-serif text-3xl font-bold text-gray-900 leading-tight">${text}</h1>
         </div>`);
+      injectImages(i);
       i++;
       continue;
     }
@@ -282,6 +346,7 @@ function parseMarkdown(md: string): string {
               <div class="mt-2 h-0.5 bg-gradient-to-r from-emerald-200 to-transparent rounded-full"></div>
             </div>
           </div>`);
+        injectImages(i);
       } else {
         const title = inline(raw);
         html.push(`
@@ -289,6 +354,7 @@ function parseMarkdown(md: string): string {
             <h2 class="font-serif text-xl font-bold text-gray-900 pb-2 border-b-2 border-emerald-100">${title}</h2>
           </div>`);
       }
+      injectImages(i);
       i++;
       continue;
     }
@@ -301,6 +367,7 @@ function parseMarkdown(md: string): string {
           <span class="w-1 h-4 bg-emerald-400 rounded-full flex-shrink-0 inline-block"></span>
           ${text}
         </h3>`);
+      injectImages(i);
       i++;
       continue;
     }
@@ -543,7 +610,7 @@ function parseMarkdown(md: string): string {
     }
 
     // ── Paragraph — with special sub-item detection ──────────────────────────
-    const paraLines: string[] = [];
+    const paraLines: { text: string; lineIdx: number }[] = [];
     while (
       i < lines.length &&
       lines[i].trim() !== "" &&
@@ -554,13 +621,13 @@ function parseMarkdown(md: string): string {
       !lines[i].match(/^\d+\. /) &&
       !lines[i].match(/^[-*] /)
     ) {
-      paraLines.push(lines[i]);
+      paraLines.push({ text: lines[i], lineIdx: i });
       i++;
     }
 
     if (paraLines.length === 0) continue;
 
-    for (const para of paraLines) {
+    for (const { text: para, lineIdx: paraLineIdx } of paraLines) {
       const trimmed = para.trim();
       if (!trimmed) continue;
 
@@ -592,6 +659,7 @@ function parseMarkdown(md: string): string {
               <div class="mt-2 h-0.5 bg-gradient-to-r from-emerald-200 to-transparent rounded-full"></div>
             </div>
           </div>`);
+        injectImages(paraLineIdx);
         continue;
       }
 
