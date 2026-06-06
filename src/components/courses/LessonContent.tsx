@@ -128,11 +128,11 @@ function scriptureChips(text: string): string {
       // Text node — skip if we're inside an existing <cite>
       if (citeDepth > 0) return seg;
       return seg.replace(
-        /\b((?:\d\s+)?[A-Za-z]+\.?)\s+(\d+:\d+(?:[–\-]\d+)?(?:,\s*\d+)?)\b/g,
+        /\b((?:\d\s+)?[A-Za-z]+\.?)\s+(\d+:\d+(?:[–\-]\d+:\d+|[–\-]\d+)?(?:(?:,\s*\d+(?:[–\-]\d+)?)+)?)/g,
         (match, bookPart, versePart) => {
           const book = BOOK_MAP[bookPart.toLowerCase().trim()];
           if (!book) return match;
-          const verseRef = versePart.replace("–", "-").trim();
+          const verseRef = versePart.replace(/–/g, "-").trim();
           const display = `${book} ${verseRef}`;
           return `<cite data-scripture="${escAttr(display)}" class="${CHIP_CLASS}">${escHtml(display)}</cite>`;
         }
@@ -231,6 +231,21 @@ function parseMarkdown(md: string): string {
 
   while (i < lines.length) {
     const line = lines[i];
+
+    // ── Lesson image  ![alt](url) ────────────────────────────────────────────
+    if (/^!\[([^\]]*)\]\(([^)]+)\)$/.test(line.trim())) {
+      const m = line.trim().match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+      const alt = escHtml(m![1]);
+      const src = escAttr(m![2]);
+      html.push(`
+        <figure class="my-8 -mx-2 sm:-mx-6 lesson-lightbox-trigger cursor-zoom-in group" data-lightbox-src="${src}">
+          <img src="${src}" alt="${alt}" loading="lazy"
+            class="w-full rounded-xl shadow-md object-cover max-h-[420px] border-4 border-amber-400 group-hover:border-amber-500 transition-colors duration-200 pointer-events-none" />
+          ${alt ? `<figcaption class="mt-2 text-center text-xs text-gray-400 italic">${alt}</figcaption>` : ""}
+        </figure>`);
+      i++;
+      continue;
+    }
 
     // ── H1 ──────────────────────────────────────────────────────────────────
     if (line.startsWith("# ")) {
@@ -394,7 +409,7 @@ function parseMarkdown(md: string): string {
           // Styled label + body text
           const bodyHtml = inline(caps.rest);
           listItems.push(`
-            <li class="rounded-xl border border-gray-100 bg-gray-50/60 p-4 space-y-2">
+            <li class="rounded-xl border border-gray-300 bg-gray-100 p-4 space-y-2">
               <div class="flex items-center gap-2">
                 <span class="flex-shrink-0 min-w-6 h-6 px-1.5 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center">${itemNum}</span>
                 ${capsLabelHtml(caps.label)}
@@ -586,7 +601,7 @@ function parseMarkdown(md: string): string {
         const caps2 = extractCapsLabel(parenSub.rest);
         if (caps2) {
           html.push(`
-            <div class="flex items-start gap-2 my-3 pl-2 rounded-lg border-l-2 border-gray-200 bg-gray-50/50 px-3 py-2.5">
+            <div class="flex items-start gap-2 my-3 pl-2 rounded-lg border-l-4 border-gray-400 bg-gray-100 px-3 py-2.5">
               ${parenNumHtml(parenSub.num)}
               <div class="flex-1 space-y-1">
                 ${capsLabelHtml(caps2.label)}
@@ -607,7 +622,7 @@ function parseMarkdown(md: string): string {
       const alphaSub = extractAlphaSubItem(trimmed);
       if (alphaSub) {
         html.push(`
-          <div class="flex items-start gap-3 my-3 ml-2 rounded-xl border border-emerald-100 bg-emerald-50/40 px-4 py-3">
+          <div class="flex items-start gap-3 my-3 ml-2 rounded-xl border border-emerald-300 bg-emerald-100 px-4 py-3">
             ${alphaBadgeHtml(alphaSub.letter)}
             <p class="text-gray-800 text-[15px] leading-relaxed flex-1">${inline(alphaSub.rest)}</p>
           </div>`);
@@ -684,17 +699,28 @@ export function LessonContent({ content, lessonId, className }: LessonContentPro
       if (saved) showSaved(det, saved);
     });
 
-    // Single delegated click handler for all submit buttons
+    // Single delegated click handler for submit buttons AND lightbox triggers
     const onClick = (e: MouseEvent) => {
       const btn = (e.target as Element).closest<HTMLElement>(".q-submit");
-      if (!btn) return;
-      const det = btn.closest<HTMLElement>("details[data-qi]");
-      if (!det) return;
-      const textarea = det.querySelector<HTMLTextAreaElement>(".q-textarea");
-      const answer = textarea?.value.trim() ?? "";
-      if (!answer) return;
-      localStorage.setItem(`q-answer:${ns}:${det.dataset.qi}`, answer);
-      showSaved(det, answer);
+      if (btn) {
+        const det = btn.closest<HTMLElement>("details[data-qi]");
+        if (!det) return;
+        const textarea = det.querySelector<HTMLTextAreaElement>(".q-textarea");
+        const answer = textarea?.value.trim() ?? "";
+        if (!answer) return;
+        localStorage.setItem(`q-answer:${ns}:${det.dataset.qi}`, answer);
+        showSaved(det, answer);
+        return;
+      }
+
+      const fig = (e.target as Element).closest<HTMLElement>(".lesson-lightbox-trigger");
+      if (fig) {
+        const src = fig.dataset.lightboxSrc;
+        if (!src) return;
+        overlayImg.src = src;
+        overlay.style.display = "flex";
+        document.body.style.overflow = "hidden";
+      }
     };
 
     // Ctrl/Cmd+Enter inside a textarea submits
@@ -713,9 +739,44 @@ export function LessonContent({ content, lessonId, className }: LessonContentPro
 
     container.addEventListener("click", onClick);
     container.addEventListener("keydown", onKeydown);
+
+    // ── Lightbox for lesson images ──────────────────────────────────────────
+    const overlay = document.createElement("div");
+    overlay.className =
+      "fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center p-4 cursor-zoom-out";
+    overlay.style.display = "none";
+
+    const overlayImg = document.createElement("img");
+    overlayImg.className =
+      "max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl border-2 border-amber-300 pointer-events-none";
+    overlay.appendChild(overlayImg);
+
+    const closeBtn = document.createElement("button");
+    closeBtn.className =
+      "absolute top-4 right-4 text-white/80 hover:text-white bg-black/50 hover:bg-black/70 rounded-full p-2 transition-colors cursor-pointer";
+    closeBtn.innerHTML =
+      `<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>`;
+    overlay.appendChild(closeBtn);
+    document.body.appendChild(overlay);
+
+    const closeLightbox = () => {
+      overlay.style.display = "none";
+      document.body.style.overflow = "";
+    };
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) closeLightbox();
+    });
+    closeBtn.addEventListener("click", closeLightbox);
+
+    const onKeyEsc = (e: KeyboardEvent) => { if (e.key === "Escape") closeLightbox(); };
+    document.addEventListener("keydown", onKeyEsc);
+
     return () => {
       container.removeEventListener("click", onClick);
       container.removeEventListener("keydown", onKeydown);
+      document.removeEventListener("keydown", onKeyEsc);
+      overlay.remove();
+      document.body.style.overflow = "";
     };
   }, [lessonId]);
 

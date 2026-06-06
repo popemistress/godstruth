@@ -128,6 +128,34 @@ export function LessonViewer({
           </div>
         </motion.div>
 
+        {/* ── Lesson header image ── */}
+        {!isImage && (lesson.coverUrl ? (
+          <motion.div variants={fadeUp} className="-mx-2 sm:-mx-0">
+            <div className="relative w-full aspect-[16/5] rounded-2xl overflow-hidden shadow-lg border-4 border-amber-400">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={lesson.coverUrl}
+                alt={lesson.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div variants={fadeUp}>
+            <div className={`relative w-full rounded-2xl overflow-hidden shadow-sm border-4 ${isSupplement ? "border-violet-300" : "border-emerald-300"}`}>
+              <div className={`h-28 sm:h-36 ${isSupplement ? "bg-gradient-to-br from-violet-800 via-purple-700 to-violet-900" : "bg-gradient-to-br from-emerald-800 via-teal-700 to-emerald-900"} flex items-center justify-center px-8`}>
+                <div className="text-center">
+                  <p className="text-white/50 text-[10px] font-black uppercase tracking-[0.25em] mb-2">{chapter.title}</p>
+                  <h2 className="text-white font-serif font-bold text-xl sm:text-2xl leading-snug max-w-xl mx-auto drop-shadow-sm">
+                    {lesson.title.replace(/^(Lesson|Supplement)\s+[\w-]+\s*[—\-–]\s*/i, "")}
+                  </h2>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+
         {/* ── Lesson header ── */}
         <motion.div variants={fadeUp} className="space-y-3">
           {/* Type badges */}
