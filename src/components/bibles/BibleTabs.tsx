@@ -342,36 +342,6 @@ function VerseOmissionsContent() {
           of ESV, NIV, NASB, CSB, and NRSV — typically moved to a footnote.
         </p>
 
-        {/* Summary reference table */}
-        <div className="overflow-x-auto rounded-xl border border-neutral-20 mb-8">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-neutral-80 text-white">
-                <th className="text-left px-4 py-3 font-semibold">Reference</th>
-                <th className="text-center px-4 py-3 font-semibold">KJV</th>
-                <th className="text-center px-4 py-3 font-semibold">ESV / NIV / NASB / CSB / NRSV</th>
-              </tr>
-            </thead>
-            <tbody>
-              {STANDARD_OMISSIONS.map((v, i) => (
-                <tr key={v.reference} className={i % 2 === 0 ? "bg-white" : "bg-neutral-05"}>
-                  <td className="px-4 py-3 font-medium text-neutral-80">{v.reference}</td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium">
-                      In main text
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="inline-block bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full font-medium">
-                      Omitted or footnoted
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
         {/* Detailed explanations */}
         <div className="space-y-6">
           {STANDARD_OMISSIONS.map((verse) => (
@@ -425,35 +395,6 @@ function VerseOmissionsContent() {
           add extensive footnotes, or mark them as textually disputed rather than treating them the
           same as the surrounding text.
         </p>
-
-        <div className="overflow-x-auto rounded-xl border border-neutral-20 mb-8">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-neutral-80 text-white">
-                <th className="text-left px-4 py-3 font-semibold">Passage</th>
-                <th className="text-center px-4 py-3 font-semibold">KJV</th>
-                <th className="text-center px-4 py-3 font-semibold">ESV / NIV / NASB / CSB / NRSV</th>
-              </tr>
-            </thead>
-            <tbody>
-              {DISPUTED_PASSAGES.map((p, i) => (
-                <tr key={p.reference} className={i % 2 === 0 ? "bg-white" : "bg-neutral-05"}>
-                  <td className="px-4 py-3 font-medium text-neutral-80">{p.reference}</td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium">
-                      In main text
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="inline-block bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full font-medium">
-                      Bracketed / disputed
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
 
         <div className="space-y-6">
           {DISPUTED_PASSAGES.map((passage) => (
