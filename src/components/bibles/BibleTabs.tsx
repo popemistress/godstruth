@@ -294,7 +294,6 @@ function VerseOmissionsContent() {
         </div>
         <div className="bg-neutral-05 border border-neutral-20 rounded-xl p-5 space-y-3 text-sm text-neutral-60 leading-relaxed">
           <p>
-            The Sanhedrin did not canonize the Christian Bible. It did not decide the New Testament.
             The Old Testament canon developed within Israel and Jewish tradition over time. The New
             Testament canon was recognized by the early church over time, especially as apostolic
             writings were received, copied, read publicly, and defended against false writings.
