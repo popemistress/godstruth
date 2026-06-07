@@ -443,15 +443,15 @@ export function BibleTabs() {
   return (
     <div>
       {/* Tab bar */}
-      <div className="flex gap-1 border-b border-neutral-20 mb-8">
+      <div className="inline-flex gap-1 bg-neutral-10 border border-neutral-20 rounded-xl p-1 mb-8">
         {TABS.map((tab) => (
           <button
             key={tab}
             onClick={() => setActive(tab)}
-            className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 ${
               active === tab
-                ? "border-neutral-80 text-neutral-80"
-                : "border-transparent text-neutral-45 hover:text-neutral-60"
+                ? "bg-white text-neutral-80 shadow-sm border border-neutral-20"
+                : "text-neutral-45 hover:text-neutral-60 hover:bg-white/50"
             }`}
           >
             {tab === "History" ? (
