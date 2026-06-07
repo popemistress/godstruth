@@ -314,6 +314,15 @@ function VerseOmissionsContent() {
             make these judgments, and Bible translation committees decide whether a disputed reading
             should go in the main text, brackets, or footnotes.
           </p>
+          <div className="bg-white border-l-4 border-violet-400 rounded-r-xl px-4 py-3 space-y-1.5">
+            <p className="text-xs font-bold text-violet-600 uppercase tracking-wider">Example</p>
+            <p className="text-neutral-70 text-sm leading-relaxed italic">
+              If one Gospel says, &ldquo;The firefighter needed water,&rdquo; and another says, &ldquo;The firefighter
+              needed water and training,&rdquo; a later copyist may add &ldquo;and training&rdquo; into the first
+              account because it is true and useful. But the textual question is whether the first
+              writer originally wrote it there.
+            </p>
+          </div>
           <p>
             No single person today has authority to &ldquo;canonize verses.&rdquo; Instead, scholars and
             translators weigh the manuscript evidence. Different traditions reach different
