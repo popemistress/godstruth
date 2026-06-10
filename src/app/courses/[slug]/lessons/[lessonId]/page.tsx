@@ -1,21 +1,27 @@
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { ChevronRight, ArrowLeft } from "lucide-react";
 import { LessonViewer } from "@/components/courses/LessonViewer";
+import { parseMarkdown } from "@/lib/lesson-parser";
 
 interface PageProps {
   params: { slug: string; lessonId: string };
 }
 
+// Deduplicate: generateMetadata and the page itself both need the lesson row.
+const getLesson = cache((lessonId: string) =>
+  db.courseLesson.findUnique({ where: { id: lessonId } })
+);
+
 export async function generateMetadata({ params }: PageProps) {
-  const lesson = await db.courseLesson.findUnique({ where: { id: params.lessonId } });
+  const lesson = await getLesson(params.lessonId);
   if (!lesson) return {};
   return { title: `${lesson.title} | Gods Truth` };
 }
 
 export default async function LessonPage({ params }: PageProps) {
-  // Parallel: nav-only query (no content) + full lesson
   const [course, lesson] = await Promise.all([
     db.content.findUnique({
       where: { slug: params.slug, type: "COURSE", published: true },
@@ -32,8 +38,11 @@ export default async function LessonPage({ params }: PageProps) {
         },
       },
     }),
-    db.courseLesson.findUnique({ where: { id: params.lessonId } }),
+    getLesson(params.lessonId),
   ]);
+
+  // Pre-render markdown on the server so the client receives HTML, not raw markdown.
+  const contentHtml = lesson?.content ? parseMarkdown(lesson.content) : "";
 
   if (!course || !lesson) notFound();
 
@@ -97,6 +106,7 @@ export default async function LessonPage({ params }: PageProps) {
         nextLesson={nextLesson}
         totalLessons={allLessons.length}
         lessonIndex={currentIndex}
+        contentHtml={contentHtml}
       />
     </div>
   );

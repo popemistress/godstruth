@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
@@ -28,6 +29,7 @@ interface LessonViewerProps {
   nextLesson: NavLesson | null;
   totalLessons: number;
   lessonIndex: number;
+  contentHtml: string;
 }
 
 function formatDuration(seconds: number) {
@@ -64,7 +66,7 @@ function markLessonComplete(lessonId: string) {
 }
 
 export function LessonViewer({
-  lesson, chapter, courseSlug, prevLesson, nextLesson, totalLessons, lessonIndex,
+  lesson, chapter, courseSlug, prevLesson, nextLesson, totalLessons, lessonIndex, contentHtml,
 }: LessonViewerProps) {
   const hasVideo = !!lesson.videoUrl;
   const hasPodcast = !!lesson.audioUrl;
@@ -132,11 +134,13 @@ export function LessonViewer({
         {!isImage && (lesson.coverUrl ? (
           <motion.div variants={fadeUp} className="-mx-2 sm:-mx-0">
             <div className="relative w-full aspect-[16/5] rounded-2xl overflow-hidden shadow-lg border-4 border-amber-400">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={lesson.coverUrl}
                 alt={lesson.title}
-                className="w-full h-full object-cover"
+                fill
+                priority
+                sizes="(max-width: 768px) 100vw, 80vw"
+                className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
             </div>
@@ -273,7 +277,7 @@ export function LessonViewer({
               <div className="h-1 bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-600" />
               <div className="px-6 sm:px-10 md:px-14 py-10 md:py-14">
                 <ScriptureTooltipProvider>
-                  <LessonContent content={lesson.content!} lessonId={lesson.id} />
+                  <LessonContent contentHtml={contentHtml} lessonId={lesson.id} />
                 </ScriptureTooltipProvider>
               </div>
             </div>
@@ -300,7 +304,7 @@ export function LessonViewer({
               <div className="h-1 bg-gradient-to-r from-violet-400 via-purple-400 to-violet-600" />
               <div className="px-6 sm:px-10 md:px-14 py-10 md:py-14">
                 <ScriptureTooltipProvider>
-                  <LessonContent content={lesson.content!} lessonId={lesson.id} />
+                  <LessonContent contentHtml={contentHtml} lessonId={lesson.id} />
                 </ScriptureTooltipProvider>
               </div>
             </div>
@@ -313,6 +317,29 @@ export function LessonViewer({
             <BookOpen className="h-10 w-10 text-gray-200 mx-auto mb-4" />
             <p className="text-gray-400 text-sm font-medium">Lesson content coming soon</p>
             <p className="text-gray-300 text-xs mt-1">We&apos;re publishing lessons progressively</p>
+          </motion.div>
+        )}
+
+        {/* ── Explore Bibles ── */}
+        {courseSlug === "gods-universal-plan-for-creation" && (lesson.title === "Lesson 2 — The Holy Scriptures" || lesson.title === "Lesson 3 — How to Interpret the Bible") && (
+          <motion.div variants={fadeUp} className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-6 shadow-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center">
+                <BookOpen className="h-6 w-6 text-amber-700" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-amber-900">Want to learn more about the Bible?</p>
+                <p className="text-[13px] text-amber-700 mt-0.5 leading-relaxed">
+                  Go in depth and increase your understanding on our Bibles page.
+                </p>
+              </div>
+              <Link
+                href="/bibles"
+                className="inline-flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white transition-all shadow-sm shadow-amber-300"
+              >
+                Explore Bibles <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
           </motion.div>
         )}
 
