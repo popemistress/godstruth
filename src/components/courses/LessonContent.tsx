@@ -96,8 +96,19 @@ const CHIP_CLASS =
  * appear outside parentheses and are not already wrapped in a chip.
  */
 function scriptureChips(text: string): string {
-  // ── Pass 1: parenthetical groups "(Mt. 7:7-11; 18:19-20)" ──────────────────
+  // ── Pass 0: strip legacy markdown-style scripture links ─────────────────────
+  // [Job 38:7](data-scripture="Job 38:7") → <cite data-scripture="Job 38:7">Job 38:7</cite>
   let result = text.replace(
+    /\[\s*([^\]]+?)\s*\]\(data-scripture\s*=\s*"\s*([^"]+?)\s*"\s*\)/g,
+    (_, display, ref) => {
+      const cleanRef = ref.trim();
+      const cleanDisplay = display.trim();
+      return `<cite data-scripture="${escAttr(cleanRef)}" class="${CHIP_CLASS}">${escHtml(cleanDisplay)}</cite>`;
+    }
+  );
+
+  // ── Pass 1: parenthetical groups "(Mt. 7:7-11; 18:19-20)" ──────────────────
+  result = result.replace(
     /\(([^)]{3,120}?\d+:\d+[^)]{0,100}?)\)/g,
     (_, inner) => {
       const refs = parseScriptureList(inner);
@@ -231,8 +242,8 @@ function figureHtml(alt: string, src: string): string {
   const s = escAttr(src);
   return `
     <figure class="my-6 -mx-2 sm:-mx-6 lesson-lightbox-trigger cursor-zoom-in group" data-lightbox-src="${s}">
-      <img src="${s}" alt="${a}" loading="lazy"
-        class="w-full rounded-xl shadow-md object-cover max-h-[420px] border-4 border-amber-400 group-hover:border-amber-500 transition-colors duration-200 pointer-events-none" />
+      <img src="${s}" alt="${a}" loading="lazy" decoding="async"
+        class="w-full rounded-xl shadow-md object-cover max-h-[380px] border-4 border-amber-400 group-hover:border-amber-500 transition-colors duration-200 pointer-events-none" />
       ${a ? `<figcaption class="mt-2 text-center text-xs text-gray-400 italic">${a}</figcaption>` : ""}
     </figure>`;
 }
@@ -241,49 +252,12 @@ function figureHtml(alt: string, src: string): string {
  * Remove image lines from the lines array. Collect all images as a pool,
  * then redistribute one image per every 4th heading so they are evenly spaced.
  */
+// Images are inserted directly before target headings by the apply script.
+// This function just returns lines as-is so images render inline at their position.
 function extractImages(lines: string[]): {
   cleanLines: string[];
-  headingImages: Map<number, string>;
 } {
-  function isHeadingLine(line: string): boolean {
-    const t = line.trim();
-    return line.startsWith("# ") || line.startsWith("## ") ||
-      line.startsWith("### ") || !!extractRomanHeading(t);
-  }
-
-  // Collect all image lines and all heading positions (in original lines)
-  const imageLineSet = new Set<number>();
-  const allImages: string[] = [];
-  const origHeadingLines: number[] = [];
-
-  for (let li = 0; li < lines.length; li++) {
-    if (isHeadingLine(lines[li])) { origHeadingLines.push(li); continue; }
-    const m = lines[li].trim().match(IMAGE_RE);
-    if (m) { imageLineSet.add(li); allImages.push(figureHtml(m[1], m[2])); }
-  }
-
-  // Build cleanLines without image lines; track clean-index of each heading
-  const cleanLines: string[] = [];
-  const headingCleanIndices: number[] = [];
-  const origToClean = new Map<number, number>();
-
-  for (let li = 0; li < lines.length; li++) {
-    if (imageLineSet.has(li)) continue;
-    if (origHeadingLines.includes(li)) headingCleanIndices.push(cleanLines.length);
-    origToClean.set(li, cleanLines.length);
-    cleanLines.push(lines[li]);
-  }
-
-  // Distribute: one image at every 4th heading (headings 4, 8, 12, …)
-  const headingImages = new Map<number, string>();
-  if (allImages.length > 0) {
-    const slots = headingCleanIndices.filter((_, hi) => [0, 2, 5, 8].includes(hi % 9));
-    slots.forEach((cleanIdx, si) => {
-      if (si < allImages.length) headingImages.set(cleanIdx, allImages[si]);
-    });
-  }
-
-  return { cleanLines, headingImages };
+  return { cleanLines: lines };
 }
 
 // ─── Core parser ─────────────────────────────────────────────────────────────
@@ -324,14 +298,20 @@ function parseMarkdown(md: string): string {
   const stripped = stripLeadingHeaders(md);
 
   const rawLines = normalizeMarkdown(stripped).split("\n");
-  const { cleanLines, headingImages } = extractImages(rawLines);
+  const { cleanLines } = extractImages(rawLines);
   const lines = cleanLines;
   const html: string[] = [];
   let i = 0;
 
-  function injectImages(lineIdx: number) {
-    const img = headingImages.get(lineIdx);
-    if (img) html.push(img);
+  // Returns true when the nearest non-empty line before lineIdx is an image marker.
+  // Used by heading handlers to reduce top margin when an image sits just above.
+  function prevLineIsImage(lineIdx: number): boolean {
+    for (let j = lineIdx - 1; j >= 0; j--) {
+      const l = lines[j].trim();
+      if (l === "") continue;
+      return IMAGE_RE.test(l);
+    }
+    return false;
   }
 
   while (i < lines.length) {
@@ -347,12 +327,12 @@ function parseMarkdown(md: string): string {
 
     // ── H1 ──────────────────────────────────────────────────────────────────
     if (line.startsWith("# ")) {
+      const hadImage = prevLineIsImage(i);
       const text = inline(line.slice(2));
       html.push(`
-        <div class="mb-8 pb-6 border-b-2 border-emerald-100">
+        <div class="${hadImage ? "mt-3" : ""} mb-8 pb-6 border-b-2 border-emerald-100">
           <h1 class="font-serif text-3xl font-bold text-gray-900 leading-tight">${text}</h1>
         </div>`);
-      injectImages(i);
       i++;
       continue;
     }
@@ -365,6 +345,7 @@ function parseMarkdown(md: string): string {
       continue; // re-process this line
     }
     if (line.startsWith("## ")) {
+      const hadImage = prevLineIsImage(i);
       const raw = line.slice(3);
       // Check if it starts with a roman numeral like "I.", "Ii.", "Iii.", etc.
       const rnMatch = raw.match(/^([IVXivx]+)\.\s*(.*)/i);
@@ -372,7 +353,7 @@ function parseMarkdown(md: string): string {
         const rn = rnMatch[1].toUpperCase();
         const title = inline(titleCaseHeading(rnMatch[2]));
         html.push(`
-          <div class="flex items-start gap-4 mt-12 mb-6">
+          <div class="flex items-start gap-4 ${hadImage ? "mt-3" : "mt-12"} mb-6">
             <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center shadow-sm shadow-emerald-500/30">
               <span class="text-white text-xs font-black tracking-tight">${escHtml(rn)}</span>
             </div>
@@ -381,28 +362,26 @@ function parseMarkdown(md: string): string {
               <div class="mt-2 h-0.5 bg-gradient-to-r from-emerald-200 to-transparent rounded-full"></div>
             </div>
           </div>`);
-        injectImages(i);
       } else {
         const title = inline(raw);
         html.push(`
-          <div class="mt-10 mb-5">
+          <div class="${hadImage ? "mt-3" : "mt-10"} mb-5">
             <h2 class="font-serif text-xl font-bold text-gray-900 pb-2 border-b-2 border-emerald-100">${title}</h2>
           </div>`);
       }
-      injectImages(i);
       i++;
       continue;
     }
 
     // ── H3 ──────────────────────────────────────────────────────────────────
     if (line.startsWith("### ")) {
+      const hadImage = prevLineIsImage(i);
       const text = inline(line.slice(4));
       html.push(`
-        <h3 class="font-semibold text-base text-gray-800 mt-7 mb-3 flex items-center gap-2">
+        <h3 class="font-semibold text-base text-gray-800 ${hadImage ? "mt-3" : "mt-7"} mb-3 flex items-center gap-2">
           <span class="w-1 h-4 bg-emerald-400 rounded-full flex-shrink-0 inline-block"></span>
           ${text}
         </h3>`);
-      injectImages(i);
       i++;
       continue;
     }
@@ -684,8 +663,9 @@ function parseMarkdown(md: string): string {
 
       const romanHeading = extractRomanHeading(trimmed);
       if (romanHeading) {
+        const hadImageRn = prevLineIsImage(paraLineIdx);
         html.push(`
-          <div class="flex items-start gap-4 mt-12 mb-6">
+          <div class="flex items-start gap-4 ${hadImageRn ? "mt-3" : "mt-12"} mb-6">
             <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center shadow-sm shadow-emerald-500/30">
               <span class="text-white text-xs font-black tracking-tight">${escHtml(romanHeading.rn)}</span>
             </div>
@@ -694,7 +674,6 @@ function parseMarkdown(md: string): string {
               <div class="mt-2 h-0.5 bg-gradient-to-r from-emerald-200 to-transparent rounded-full"></div>
             </div>
           </div>`);
-        injectImages(paraLineIdx);
         continue;
       }
 
