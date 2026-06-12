@@ -192,8 +192,8 @@ function figureHtml(alt: string, src: string): string {
   const s = escAttr(src);
   return `
     <figure class="my-6 -mx-2 sm:-mx-6 lesson-lightbox-trigger cursor-zoom-in group" data-lightbox-src="${s}">
-      <img src="${s}" alt="${a}" loading="lazy" decoding="async"
-        class="w-full rounded-xl shadow-md object-cover max-h-[247px] border-4 border-amber-400 group-hover:border-amber-500 transition-colors duration-200 pointer-events-none" />
+      <img src="${s}" alt="${a}" loading="lazy" decoding="async" style="max-height:160px"
+        class="w-full rounded-xl shadow-md object-cover border-4 border-amber-400 group-hover:border-amber-500 transition-colors duration-200 pointer-events-none" />
     </figure>`;
 }
 
