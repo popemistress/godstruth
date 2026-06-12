@@ -193,7 +193,7 @@ function figureHtml(alt: string, src: string): string {
   return `
     <figure class="my-6 -mx-2 sm:-mx-6 lesson-lightbox-trigger cursor-zoom-in group" data-lightbox-src="${s}">
       <img src="${s}" alt="${a}" loading="lazy" decoding="async"
-        class="w-full rounded-xl shadow-md object-cover max-h-[254px] border-4 border-amber-400 group-hover:border-amber-500 transition-colors duration-200 pointer-events-none" />
+        class="w-full rounded-xl shadow-md object-cover max-h-[247px] border-4 border-amber-400 group-hover:border-amber-500 transition-colors duration-200 pointer-events-none" />
     </figure>`;
 }
 
