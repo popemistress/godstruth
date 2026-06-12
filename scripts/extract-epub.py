@@ -96,12 +96,7 @@ FILE_MAP = [
     ("index_split_079.html", "supplement",  25),
     ("index_split_080.html", "lesson",      51),
     ("index_split_081.html", "lesson",      52),
-    ("index_split_082.html", "supplement",  26),  # ToC contains Supplement 26? No...
 ]
-
-# Supplement 26 is for lessons 51-52 — it's in 082 (which is ToC) so we skip
-# Actually looking at the file map the last supplement file should be after 081
-# Let me check: supplements are every 3rd file in sequence. S26 for L51+L52 might be missing or in 082.
 
 # ── HTML → Markdown converter ─────────────────────────────────────────────────
 

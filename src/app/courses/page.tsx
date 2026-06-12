@@ -30,7 +30,7 @@ export default async function CoursesPage({ searchParams }: PageProps) {
         },
       },
     },
-    orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+    orderBy: [{ order: "desc" }, { featured: "desc" }, { createdAt: "desc" }],
   });
 
   const totalLessons = courses.reduce(
@@ -113,8 +113,8 @@ export default async function CoursesPage({ searchParams }: PageProps) {
               </p>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {courses.map((course) => (
-                <CourseCard key={course.id} course={course} />
+              {courses.map((course, index) => (
+                <CourseCard key={course.id} course={course} isFirst={index === 0} />
               ))}
             </div>
           </>

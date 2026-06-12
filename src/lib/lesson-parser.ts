@@ -4,7 +4,7 @@
  * Called by LessonPage (server) so the client never has to run this on navigation.
  */
 
-import { parseScriptureList, BOOK_MAP } from "@/lib/scripture-utils";
+import { INLINE_SCRIPTURE_RE, parseScriptureList, BOOK_MAP } from "@/lib/scripture-utils";
 
 // ─── String utilities ─────────────────────────────────────────────────────────
 
@@ -117,7 +117,7 @@ function scriptureChips(text: string): string {
       }
       if (citeDepth > 0) return seg;
       return seg.replace(
-        /\b((?:\d\s+)?[A-Za-z]+\.?)\s+(\d+:\d+(?:[–\-]\d+:\d+|[–\-]\d+)?(?:(?:,\s*\d+(?:[–\-]\d+)?)+)?)/g,
+        INLINE_SCRIPTURE_RE,
         (match, bookPart, versePart) => {
           const book = BOOK_MAP[bookPart.toLowerCase().trim()];
           if (!book) return match;
@@ -194,8 +194,67 @@ function figureHtml(alt: string, src: string): string {
     <figure class="my-6 -mx-2 sm:-mx-6 lesson-lightbox-trigger cursor-zoom-in group" data-lightbox-src="${s}">
       <img src="${s}" alt="${a}" loading="lazy" decoding="async"
         class="w-full rounded-xl shadow-md object-cover max-h-[380px] border-4 border-amber-400 group-hover:border-amber-500 transition-colors duration-200 pointer-events-none" />
-      ${a ? `<figcaption class="mt-2 text-center text-xs text-gray-400 italic">${a}</figcaption>` : ""}
     </figure>`;
+}
+
+function imageLine(alt: string, src: string): string {
+  return `![${alt}](${src})`;
+}
+
+function isImagePlacementHeading(line: string): boolean {
+  const trimmed = line.trim();
+  if (/^##\s+Questions on (Lesson|Supplement)/i.test(trimmed)) return false;
+  return (
+    /^#{1,3}\s+/.test(trimmed) ||
+    !!extractRomanHeading(trimmed) ||
+    isStandaloneSubheading(trimmed)
+  );
+}
+
+function placeLessonImages(lines: string[]): string[] {
+  const images: { alt: string; src: string }[] = [];
+  const textLines: string[] = [];
+
+  for (const line of lines) {
+    const match = line.trim().match(IMAGE_RE);
+    if (match) {
+      images.push({ alt: match[1], src: match[2] });
+    } else {
+      textLines.push(line);
+    }
+  }
+
+  if (images.length === 0) return textLines;
+
+  const out: string[] = [];
+  let headingCount = 0;
+  let imageIndex = 0;
+  let placedTopImage = false;
+
+  const nextImage = () => {
+    const image = images[Math.min(imageIndex, images.length - 1)];
+    imageIndex++;
+    return imageLine(image.alt, image.src);
+  };
+
+  for (const line of textLines) {
+    if (isImagePlacementHeading(line)) {
+      headingCount++;
+      if (!placedTopImage) {
+        out.push(nextImage(), "");
+        placedTopImage = true;
+      } else if (headingCount % 3 === 0) {
+        out.push("", nextImage(), "");
+      }
+    }
+    out.push(line);
+  }
+
+  if (!placedTopImage) {
+    return [nextImage(), "", ...textLines];
+  }
+
+  return out;
 }
 
 function stripLeadingHeaders(md: string): string {
@@ -219,7 +278,7 @@ function stripLeadingHeaders(md: string): string {
 export function parseMarkdown(md: string): string {
   const stripped = stripLeadingHeaders(md);
   const rawLines = normalizeMarkdown(stripped).split("\n");
-  const lines = rawLines;
+  const lines = placeLessonImages(rawLines);
   const html: string[] = [];
   let i = 0;
 

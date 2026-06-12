@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Star,
   Users,
+  Volume2,
 } from "lucide-react";
 import { ChapterList } from "@/components/courses/ChapterList";
 import { CourseProgressCircle } from "@/components/courses/CourseProgressCircle";
@@ -19,29 +20,67 @@ interface PageProps {
   params: { slug: string };
 }
 
-// What students will learn — all 52 lessons + 26 supplements (God's Universal Plan for Creation)
-const WHAT_YOU_LEARN = [
-  "God's complete blueprint — 5 ages, 7 dispensations, eternity past to eternity future",
-  "Biblical inspiration, interpretation rules, and how to rightly divide the Word",
-  "The nature and attributes of God: omniscience, omnipotence, omnipresence, immutability",
-  "Original creation, Lucifer's fall, the Dispensation of Angels, and the re-creation of Earth",
-  "All 5 historical dispensations: Innocence, Conscience, Human Government, Promise, and Law",
-  "Divine healing, divine health, and deliverance from demonic sickness",
-  "The laws of prayer: how to ask, receive, and persist until the full answer comes",
-  "The Dispensation of Grace, the New Birth, and the NT church program",
-  "The full person and work of Jesus Christ — incarnation through present heavenly ministry",
-  "The doctrine of sin — its origin, nature, and God's complete provision for deliverance",
-  "The Holy Spirit — His person, offices, baptism, filling, nine gifts, and nine fruits",
-  "The doctrine of the Trinity answered plainly from Scripture",
-  "Faith — its laws and how to apply it to healing, finances, and every area of life",
-  "Salvation, justification, sanctification, and eternal security — doctrine and experience",
-  "Where are the dead? — the biblical state of the departed soul and spirit",
-  "The Rapture, the resurrections, and the sequence of end-time events",
-  "The Millennium — Christ's 1,000-year reign and Satan's final revolt",
-  "The New Heaven, New Earth, New Jerusalem, and the eternal state",
-  "The Bride of Christ — her identity, calling, and eternal destiny",
-  "26 personal supplements: prayer, healing, faith, and overcoming demonic opposition daily",
-];
+// What students will learn — keyed by course slug
+const WHAT_YOU_LEARN_BY_SLUG: Record<string, string[]> = {
+  "gods-universal-plan-for-creation": [
+    "God's complete blueprint — 5 ages, 7 dispensations, eternity past to eternity future",
+    "Biblical inspiration, interpretation rules, and how to rightly divide the Word",
+    "The nature and attributes of God: omniscience, omnipotence, omnipresence, immutability",
+    "Original creation, Lucifer's fall, the Dispensation of Angels, and the re-creation of Earth",
+    "All 5 historical dispensations: Innocence, Conscience, Human Government, Promise, and Law",
+    "Divine healing, divine health, and deliverance from demonic sickness",
+    "The laws of prayer: how to ask, receive, and persist until the full answer comes",
+    "The Dispensation of Grace, the New Birth, and the NT church program",
+    "The full person and work of Jesus Christ — incarnation through present heavenly ministry",
+    "The doctrine of sin — its origin, nature, and God's complete provision for deliverance",
+    "The Holy Spirit — His person, offices, baptism, filling, nine gifts, and nine fruits",
+    "The doctrine of the Trinity answered plainly from Scripture",
+    "Faith — its laws and how to apply it to healing, finances, and every area of life",
+    "Salvation, justification, sanctification, and eternal security — doctrine and experience",
+    "Where are the dead? — the biblical state of the departed soul and spirit",
+    "The Rapture, the resurrections, and the sequence of end-time events",
+    "The Millennium — Christ's 1,000-year reign and Satan's final revolt",
+    "The New Heaven, New Earth, New Jerusalem, and the eternal state",
+    "The Bride of Christ — her identity, calling, and eternal destiny",
+    "26 personal supplements: prayer, healing, faith, and overcoming demonic opposition daily",
+  ],
+  "angels": [
+    "The true nature of angels as pure spirits — intellect, will, and no material body",
+    "Why each angel is its own unique species, unlike any other being in existence",
+    "How God created the entire angelic hierarchy instantaneously, all at once",
+    "The three moments of angelic creation: infused knowledge, the test of will, and eternal confirmation",
+    "How angels know through infused knowledge — and why they cannot be in factual error",
+    "The nine choirs of angels organized into three hierarchies with distinct roles",
+    "The First Hierarchy — Seraphim, Cherubim, and Thrones — pure contemplation of God",
+    "The Second Hierarchy — Dominations, Virtues, and Powers — governing the universe",
+    "The Third Hierarchy — Principalities, Archangels, and Angels — ministering to human salvation",
+    "The three named Archangels: Michael the warrior, Gabriel the announcer, Raphael the healer",
+    "Why Gabriel was created for the Annunciation and Michael for the guardianship of the elect",
+    "The doctrine of the Guardian Angel — one assigned to every person from conception to death",
+    "What your guardian angel can and cannot do, and how to cultivate a living relationship with it",
+    "Angels in the Old Testament — from Eden's Cherubim to Isaiah's Seraphim to Daniel's Archangels",
+    "Angels in the New Testament — at the Annunciation, Nativity, Resurrection, and Ascension",
+    "How the Mass joins the worship of the Seraphim and the prayers of every angel before the throne",
+    "Common misconceptions about angels corrected by Scripture and tradition",
+    "11 personal supplements: key terms, scripture memory, comparison tables, and questions for reflection",
+  ],
+  "demons": [
+    "The biblical reality of demons — not myths, but real spiritual beings active in the world today",
+    "Lucifer's fall from heaven — pride, rebellion, and the origin of evil in the created order",
+    "Satan's nature, names, and methods — the serpent, the dragon, the deceiver, the accuser",
+    "The fallen angels and their ranks — how rebellion did not erase their intelligence or power",
+    "Demonic possession and oppression — the difference between external attack and internal control",
+    "The spirits of infirmity, poverty, and bondage — how demons target specific areas of human life",
+    "Doctrines of devils in the last days — deception through false teaching and seducing spirits",
+    "Divination, witchcraft, necromancy, and the black art — condemned by Scripture, overcome by truth",
+    "The believer's authority in Christ — the Name of Jesus and the power of the Holy Spirit",
+    "The armor of God — how to take away the devil's weapons and stand in every spiritual battle",
+    "Deliverance and exorcism — casting out demons by the authority of the risen Lord",
+    "Spiritual warfare in the end times — the final conflict and Christ's ultimate triumph",
+    "Living in daily victory over darkness — maintaining freedom through prayer, worship, and the Word",
+    "8 personal supplements: scripture memory, key terms, comparison tables, and reflection questions",
+  ],
+};
 
 export async function generateMetadata({ params }: PageProps) {
   const course = await db.content.findUnique({ where: { slug: params.slug } });
@@ -171,13 +210,53 @@ export default async function CourseDetailPage({ params }: PageProps) {
                 What You Will Learn
               </h2>
               <ul className="space-y-3">
-                {WHAT_YOU_LEARN.map((item, i) => (
+                {(WHAT_YOU_LEARN_BY_SLUG[course.slug] ?? WHAT_YOU_LEARN_BY_SLUG["gods-universal-plan-for-creation"]).map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
                     <span className="text-sm text-gray-600 leading-relaxed">{item}</span>
                   </li>
                 ))}
               </ul>
+
+              {course.slug === "angels" && (
+                <>
+                  <div className="my-5 border-t border-gray-200" />
+                  <div className="flex items-center gap-3">
+                    <Volume2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Course Overview
+                    </span>
+                  </div>
+                  <audio
+                    controls
+                    className="w-full mt-3"
+                    preload="metadata"
+                  >
+                    <source src="/angels-audio.mp3" type="audio/mpeg" />
+                    Your browser does not support the audio element.
+                  </audio>
+                </>
+              )}
+
+              {course.slug === "demons" && (
+                <>
+                  <div className="my-5 border-t border-gray-200" />
+                  <div className="flex items-center gap-3">
+                    <Volume2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Course Overview
+                    </span>
+                  </div>
+                  <audio
+                    controls
+                    className="w-full mt-3"
+                    preload="metadata"
+                  >
+                    <source src="/demons-audio.mp3" type="audio/mpeg" />
+                    Your browser does not support the audio element.
+                  </audio>
+                </>
+              )}
             </div>
 
             {/* Chapter list */}
@@ -227,7 +306,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
               <div className="mt-4 space-y-3 pt-4 border-t border-gray-100">
                 {[
-                  { icon: BookOpen, label: `${course.chapters.length} Parts (I–IV)` },
+                  { icon: BookOpen, label: `${course.chapters.length} Parts` },
                   { icon: Play, label: `${lessonCount} Lessons` },
                   ...(supplementCount > 0
                     ? [{ icon: BookOpen, label: `${supplementCount} Supplements` }]

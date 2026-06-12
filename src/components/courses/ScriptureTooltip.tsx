@@ -4,15 +4,26 @@
  * ScriptureTooltipProvider
  *
  * Wraps lesson/supplement content, intercepts hover/click on [data-scripture]
- * chips, and shows a floating tooltip with KJV and BSB translations.
- * Hover over the KJV / BSB pill in the header to switch translations.
+ * chips, and shows a floating tooltip with a selectable Bible translation.
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { BookOpen, X, Loader2, AlertCircle } from "lucide-react";
+import { BookOpen, X, Loader2, AlertCircle, ChevronDown } from "lucide-react";
 
-type Translation = "kjv" | "bsb";
+type TranslationCode = string;
+
+interface TranslationOption {
+  code: string;
+  label: string;
+  name: string;
+}
+
+const DEFAULT_TRANSLATION: TranslationOption = {
+  code: "kjv",
+  label: "KJV",
+  name: "King James Version",
+};
 
 // ── Per-translation fetch state ───────────────────────────────────────────────
 
@@ -27,20 +38,34 @@ const empty = (): TranslationState => ({ text: null, loading: false, error: null
 // ── Tooltip state ─────────────────────────────────────────────────────────────
 
 interface TooltipState {
-  ref:    string;
-  x:      number;
-  y:      number;
-  above:  boolean;
-  active: Translation;
-  kjv:    TranslationState;
-  bsb:    TranslationState;
+  ref:          string;
+  x:            number;
+  y:            number;
+  above:        boolean;
+  active:       TranslationCode;
+  translations: Record<TranslationCode, TranslationState>;
 }
 
 // ── Module-level cache: "ref:translation" → text ─────────────────────────────
 
 const cache = new Map<string, string>();
+let translationsPromise: Promise<TranslationOption[]> | null = null;
 
-async function fetchTranslation(ref: string, translation: Translation): Promise<string> {
+async function fetchAvailableTranslations(): Promise<TranslationOption[]> {
+  translationsPromise ??= fetch("/api/scripture?translations=1", {
+    signal: AbortSignal.timeout(8000),
+  })
+    .then(async (res) => {
+      const data = await res.json() as { translations?: TranslationOption[]; error?: string };
+      if (!res.ok || data.error) throw new Error(data.error ?? `HTTP ${res.status}`);
+      return data.translations?.length ? data.translations : [DEFAULT_TRANSLATION];
+    })
+    .catch(() => [DEFAULT_TRANSLATION]);
+
+  return translationsPromise;
+}
+
+async function fetchTranslation(ref: string, translation: TranslationCode): Promise<string> {
   const key = `${ref}:${translation}`;
   if (cache.has(key)) return cache.get(key)!;
 
@@ -57,39 +82,6 @@ async function fetchTranslation(ref: string, translation: Translation): Promise<
   return text;
 }
 
-// ── Translation pill ──────────────────────────────────────────────────────────
-
-function TranslationPill({
-  label,
-  active,
-  loading,
-  onActivate,
-}: {
-  label:      string;
-  active:     boolean;
-  loading:    boolean;
-  onActivate: () => void;
-}) {
-  return (
-    <button
-      onMouseEnter={onActivate}
-      onClick={onActivate}
-      className={[
-        "relative flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold",
-        "transition-all duration-150 select-none leading-none",
-        active
-          ? "bg-white text-emerald-800 shadow-sm"
-          : "text-emerald-200 hover:text-white hover:bg-white/15",
-      ].join(" ")}
-    >
-      {loading && active && (
-        <Loader2 className="h-2.5 w-2.5 animate-spin flex-shrink-0" />
-      )}
-      {label}
-    </button>
-  );
-}
-
 // ── Tooltip card ──────────────────────────────────────────────────────────────
 
 const TOOLTIP_W = 360;
@@ -100,19 +92,23 @@ function Tooltip({
   onDismiss,
   onKeepOpen,
   onSwitchTranslation,
+  translationOptions,
 }: {
   state:               TooltipState;
   onClose:             () => void;   // scheduleClose — on mouseleave
   onDismiss:           () => void;   // closeTooltip  — on X click
   onKeepOpen:          () => void;   // clearClose    — on mouseenter
-  onSwitchTranslation: (t: Translation) => void;
+  onSwitchTranslation: (t: TranslationCode) => void;
+  translationOptions:  TranslationOption[];
 }) {
   const left = Math.min(
     Math.max(state.x - TOOLTIP_W / 2, 8),
     (typeof window !== "undefined" ? window.innerWidth : 800) - TOOLTIP_W - 8
   );
 
-  const current = state[state.active];
+  const current = state.translations[state.active] ?? empty();
+  const activeTranslation =
+    translationOptions.find((translation) => translation.code === state.active) ?? DEFAULT_TRANSLATION;
 
   return (
     <div
@@ -150,20 +146,46 @@ function Tooltip({
             {state.ref}
           </span>
 
-          {/* Translation switcher */}
-          <div className="flex items-center gap-0.5 bg-white/10 rounded-full p-0.5 flex-shrink-0">
-            <TranslationPill
-              label="KJV"
-              active={state.active === "kjv"}
-              loading={state.kjv.loading}
-              onActivate={() => onSwitchTranslation("kjv")}
-            />
-            <TranslationPill
-              label="BSB"
-              active={state.active === "bsb"}
-              loading={state.bsb.loading}
-              onActivate={() => onSwitchTranslation("bsb")}
-            />
+          {/* Translation selector */}
+          <div className="relative flex-shrink-0">
+            {current.loading && (
+              <Loader2 className="pointer-events-none absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 animate-spin text-emerald-800" />
+            )}
+            <select
+              value={state.active}
+              onPointerDown={(event) => {
+                event.stopPropagation();
+                onKeepOpen();
+              }}
+              onMouseDown={(event) => {
+                event.stopPropagation();
+                onKeepOpen();
+              }}
+              onFocus={onKeepOpen}
+              onChange={(event) => {
+                onKeepOpen();
+                onSwitchTranslation(event.target.value);
+                window.setTimeout(onKeepOpen, 0);
+              }}
+              onClick={(event) => {
+                event.stopPropagation();
+                onKeepOpen();
+              }}
+              className={[
+                "h-7 max-w-[132px] appearance-none rounded-full border border-white/20 bg-white",
+                "py-1 pl-6 pr-7 text-[11px] font-bold leading-none text-emerald-900 shadow-sm",
+                "outline-none transition-colors hover:bg-emerald-50 focus:ring-2 focus:ring-white/60",
+                current.loading ? "" : "pl-2.5",
+              ].join(" ")}
+              aria-label="Bible translation"
+            >
+              {translationOptions.map((translation) => (
+                <option key={translation.code} value={translation.code}>
+                  {translation.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-emerald-800" />
           </div>
 
           {/* Close */}
@@ -181,7 +203,7 @@ function Tooltip({
           {current.loading && (
             <div className="flex items-center gap-2 text-gray-400 text-sm">
               <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
-              <span>Loading {state.active.toUpperCase()}…</span>
+              <span>Loading {activeTranslation.label}...</span>
             </div>
           )}
 
@@ -202,7 +224,7 @@ function Tooltip({
         {/* ── Footer: translation label ── */}
         <div className="px-4 pb-3 -mt-1">
           <p className="text-[10px] text-gray-400">
-            {state.active === "kjv" ? "King James Version" : "Berean Standard Bible"}
+            {activeTranslation.name}
           </p>
         </div>
       </div>
@@ -214,8 +236,17 @@ function Tooltip({
 
 export function ScriptureTooltipProvider({ children }: { children: React.ReactNode }) {
   const [tooltip,   setTooltip]   = useState<TooltipState | null>(null);
+  const [translationOptions, setTranslationOptions] = useState<TranslationOption[]>([DEFAULT_TRANSLATION]);
   const closeTimer                 = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef               = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    fetchAvailableTranslations().then((translations) => {
+      if (mounted) setTranslationOptions(translations);
+    });
+    return () => { mounted = false; };
+  }, []);
 
   const clearClose = useCallback(() => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -232,23 +263,42 @@ export function ScriptureTooltipProvider({ children }: { children: React.ReactNo
   }, [clearClose, closeTooltip]);
 
   // Load a translation into the tooltip state
-  const loadTranslation = useCallback(async (ref: string, t: Translation) => {
+  const loadTranslation = useCallback(async (ref: string, t: TranslationCode) => {
     setTooltip(prev => {
       if (!prev || prev.ref !== ref) return prev;
-      return { ...prev, active: t, [t]: { text: null, loading: true, error: null } };
+      return {
+        ...prev,
+        active: t,
+        translations: {
+          ...prev.translations,
+          [t]: { text: null, loading: true, error: null },
+        },
+      };
     });
 
     try {
       const text = await fetchTranslation(ref, t);
       setTooltip(prev => {
         if (!prev || prev.ref !== ref) return prev;
-        return { ...prev, [t]: { text, loading: false, error: null } };
+        return {
+          ...prev,
+          translations: {
+            ...prev.translations,
+            [t]: { text, loading: false, error: null },
+          },
+        };
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       setTooltip(prev => {
         if (!prev || prev.ref !== ref) return prev;
-        return { ...prev, [t]: { text: null, loading: false, error: msg } };
+        return {
+          ...prev,
+          translations: {
+            ...prev.translations,
+            [t]: { text: null, loading: false, error: msg },
+          },
+        };
       });
     }
   }, []);
@@ -265,40 +315,54 @@ export function ScriptureTooltipProvider({ children }: { children: React.ReactNo
 
     setTooltip({
       ref, x: midX, y, above,
-      active: "kjv",
-      kjv: { text: null, loading: true,  error: null },
-      bsb: { text: null, loading: false, error: null },
+      active: DEFAULT_TRANSLATION.code,
+      translations: {
+        [DEFAULT_TRANSLATION.code]: { text: null, loading: true, error: null },
+      },
     });
 
     try {
-      const text = await fetchTranslation(ref, "kjv");
+      const text = await fetchTranslation(ref, DEFAULT_TRANSLATION.code);
       setTooltip(prev =>
         prev?.ref === ref
-          ? { ...prev, kjv: { text, loading: false, error: null } }
+          ? {
+              ...prev,
+              translations: {
+                ...prev.translations,
+                [DEFAULT_TRANSLATION.code]: { text, loading: false, error: null },
+              },
+            }
           : prev
       );
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       setTooltip(prev =>
         prev?.ref === ref
-          ? { ...prev, kjv: { text: null, loading: false, error: msg } }
+          ? {
+              ...prev,
+              translations: {
+                ...prev.translations,
+                [DEFAULT_TRANSLATION.code]: { text: null, loading: false, error: msg },
+              },
+            }
           : prev
       );
     }
   }, []);
 
-  // Switch active translation (triggered by hovering/clicking KJV or BSB pill)
-  const switchTranslation = useCallback((t: Translation) => {
+  // Switch active translation and fetch it if it has not been loaded yet.
+  const switchTranslation = useCallback((t: TranslationCode) => {
     setTooltip(prev => {
       if (!prev) return prev;
       // Already active and loaded — just switch display
-      if (prev.active === t && prev[t].text) return prev;
+      if (prev.active === t && prev.translations[t]?.text) return prev;
       return { ...prev, active: t };
     });
     setTooltip(prev => {
       if (!prev) return prev;
       // If not yet fetched, kick off fetch
-      if (!prev[t].text && !prev[t].loading && !prev[t].error) {
+      const translation = prev.translations[t];
+      if (!translation?.text && !translation?.loading && !translation?.error) {
         loadTranslation(prev.ref, t);
       }
       return { ...prev, active: t };
@@ -381,6 +445,7 @@ export function ScriptureTooltipProvider({ children }: { children: React.ReactNo
             onDismiss={closeTooltip}
             onKeepOpen={clearClose}
             onSwitchTranslation={switchTranslation}
+            translationOptions={translationOptions}
           />,
           document.body
         )

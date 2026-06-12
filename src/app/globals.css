@@ -105,3 +105,54 @@ a {
     @apply rounded-lg bg-white border border-neutral-30 shadow-sm overflow-hidden;
   }
 }
+
+@keyframes beta-banner-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes beta-banner-glow {
+  0% {
+    transform: translateX(-125%);
+  }
+  100% {
+    transform: translateX(360%);
+  }
+}
+
+@keyframes beta-banner-spark {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.82;
+  }
+  50% {
+    transform: scale(1.12) rotate(10deg);
+    opacity: 1;
+  }
+}
+
+.beta-banner {
+  background: linear-gradient(110deg, #e4f2f5 0%, #ffffff 32%, #efe8db 64%, #e4f2f5 100%);
+  background-size: 280% 100%;
+  animation: beta-banner-shift 13s ease-in-out infinite;
+}
+
+.beta-banner-glow {
+  animation: beta-banner-glow 5.5s ease-in-out infinite;
+}
+
+.beta-banner-spark {
+  animation: beta-banner-spark 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .beta-banner,
+  .beta-banner-glow,
+  .beta-banner-spark {
+    animation: none;
+  }
+}

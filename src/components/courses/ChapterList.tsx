@@ -136,10 +136,13 @@ export function ChapterList({ chapters, courseSlug, completedLessonIds = [] }: C
                   const label = LESSON_LABELS[lesson.type as LessonType] ?? lesson.type;
                   const isOverviewImage = lesson.type === "IMAGE";
                   const isSupplement = lesson.type === "SUPPLEMENT";
+                  const isWaveCheckpoint = lesson.type === "QUIZ" && lesson.title.startsWith("Wave");
+                  const nextLesson = chapter.lessons[lessonIdx + 1];
 
                   return (
+                    <div key={lesson.id}>
                     <Link
-                      key={lesson.id}
+                      key={undefined}
                       href={`/courses/${courseSlug}/lessons/${lesson.id}`}
                       className={cn(
                         "flex items-center gap-3 px-4 py-3 transition-colors border-b border-gray-50 last:border-0 group",
@@ -197,6 +200,14 @@ export function ChapterList({ chapters, courseSlug, completedLessonIds = [] }: C
                         </span>
                       )}
                     </Link>
+                    {isWaveCheckpoint && nextLesson && (
+                      <div className="flex items-center gap-3 px-4 py-1.5 bg-gray-100 border-t border-b border-gray-200">
+                        <div className="flex-1 h-px bg-gray-300" />
+                        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest whitespace-nowrap">Next Wave</span>
+                        <div className="flex-1 h-px bg-gray-300" />
+                      </div>
+                    )}
+                    </div>
                   );
                 })}
               </div>

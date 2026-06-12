@@ -60,9 +60,6 @@ export function CtaSections() {
             <Button variant="brand" asChild>
               <Link href="/register">Join for Free</Link>
             </Button>
-            <Button variant="secondary" asChild>
-              <Link href="/give">Support the Mission</Link>
-            </Button>
           </div>
         </div>
       </section>

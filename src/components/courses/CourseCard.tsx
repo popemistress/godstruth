@@ -14,9 +14,10 @@ interface CourseCardProps {
   course: Content & {
     chapters: (CourseChapter & { lessons: { id: string; type: string }[] })[];
   };
+  isFirst?: boolean;
 }
 
-export function CourseCard({ course }: CourseCardProps) {
+export function CourseCard({ course, isFirst }: CourseCardProps) {
   const totalLessons = course.chapters.reduce(
     (acc, ch) => acc + ch.lessons.filter((lesson) => lesson.type !== "SUPPLEMENT" && lesson.type !== "IMAGE").length,
     0
@@ -46,7 +47,7 @@ export function CourseCard({ course }: CourseCardProps) {
   return (
     <>
       {/* ── Card ── */}
-      <div className="group rounded-xl overflow-hidden border border-gray-200 bg-white hover:border-emerald-300 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg shadow-sm flex flex-col">
+      <div className={`group rounded-xl overflow-hidden bg-white hover:border-emerald-300 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg shadow-sm flex flex-col ${isFirst ? 'border-2 border-amber-400' : 'border border-gray-200'}`}>
 
         {/* Thumbnail — click to expand fullscreen */}
         <div className="relative aspect-video bg-gray-100 overflow-hidden flex-shrink-0">
@@ -56,6 +57,8 @@ export function CourseCard({ course }: CourseCardProps) {
                 src={course.thumbnail}
                 alt={course.title}
                 fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                priority
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
               {/* Expand overlay — only visible on hover, stops propagation so it doesn't follow the card link */}
@@ -192,19 +195,20 @@ export function CourseCard({ course }: CourseCardProps) {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.92, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                style={{ transform: `scale(${scale})`, transformOrigin: "top center" }}
                 onClick={(e) => e.stopPropagation()}
                 className="cursor-default"
               >
-                <Image
-                  src={course.thumbnail}
-                  alt={course.title}
-                  width={1920}
-                  height={1080}
-                  className="rounded-lg shadow-2xl max-w-none"
-                  style={{ width: "min(1920px, 100vw - 32px)", height: "auto" }}
-                  priority
-                />
+                <div style={{ transform: `scale(${scale})`, transformOrigin: "top center" }}>
+                  <Image
+                    src={course.thumbnail}
+                    alt={course.title}
+                    width={1920}
+                    height={1080}
+                    className="rounded-lg shadow-2xl max-w-none"
+                    style={{ width: "min(1920px, calc(100vw - 32px))", height: "auto" }}
+                    priority
+                  />
+                </div>
               </motion.div>
             </div>
 

@@ -1,2 +1,0 @@
-# godstruth
-Christian Information Site

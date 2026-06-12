@@ -7,6 +7,7 @@ import { BookOpen, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BetaBanner } from "@/components/shared/BetaBanner";
 import type { Session } from "next-auth";
 
 interface NavbarProps {
@@ -17,7 +18,6 @@ interface NavbarProps {
 
 const NAV_LINKS = [
   { label: "Courses", href: "/courses" },
-  { label: "Knowledge", href: "/knowledge" },
   { label: "Bibles", href: "/bibles" },
 ];
 
@@ -27,6 +27,7 @@ export function Navbar({ session, announcementMessage, announcementUrl }: Navbar
 
   return (
     <>
+      <BetaBanner />
       {announcementMessage && (
         <div className="relative bg-brand text-white text-sm text-center py-2.5 px-4 sm:px-10">
           {announcementUrl ? (
@@ -61,9 +62,6 @@ export function Navbar({ session, announcementMessage, announcementUrl }: Navbar
 
           {/* Right side */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="brand" size="sm" asChild>
-              <Link href="/give">Give</Link>
-            </Button>
             {session ? (
               <div className="flex items-center gap-2">
                 {session.user.role === "ADMIN" && (
@@ -111,9 +109,6 @@ export function Navbar({ session, announcementMessage, announcementUrl }: Navbar
               </Link>
             ))}
             <div className="mt-2 flex flex-col gap-2">
-              <Button variant="brand" size="sm" asChild>
-                <Link href="/give" onClick={() => setMobileOpen(false)}>Give</Link>
-              </Button>
               {session ? (
                 <button
                   onClick={() => { setMobileOpen(false); signOut({ callbackUrl: "/" }); }}
