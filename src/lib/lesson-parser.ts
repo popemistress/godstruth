@@ -227,31 +227,21 @@ function placeLessonImages(lines: string[]): string[] {
   if (images.length === 0) return textLines;
 
   const out: string[] = [];
-  let headingCount = 0;
-  let imageIndex = 0;
   let placedTopImage = false;
-
-  const nextImage = () => {
-    const image = images[Math.min(imageIndex, images.length - 1)];
-    imageIndex++;
-    return imageLine(image.alt, image.src);
-  };
+  const topImage = imageLine(images[0].alt, images[0].src);
 
   for (const line of textLines) {
     if (isImagePlacementHeading(line)) {
-      headingCount++;
       if (!placedTopImage) {
-        out.push(nextImage(), "");
+        out.push(topImage, "");
         placedTopImage = true;
-      } else if (headingCount % 3 === 0) {
-        out.push("", nextImage(), "");
       }
     }
     out.push(line);
   }
 
   if (!placedTopImage) {
-    return [nextImage(), "", ...textLines];
+    return [topImage, "", ...textLines];
   }
 
   return out;
