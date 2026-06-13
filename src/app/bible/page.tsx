@@ -35,7 +35,7 @@ export default function BibleHubPage() {
           Bible Study Tools
         </h1>
         <p className="text-gray-500 max-w-xl mx-auto">
-          Everything you need to search, study, memorize, and apply God's Word — all in one place.
+          Everything you need to search, study, memorize, and apply God&apos;s Word — all in one place.
         </p>
       </div>
 
