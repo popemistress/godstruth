@@ -71,8 +71,8 @@ export default async function ProfilePage() {
       {progressItems.length === 0 && (
         <div className="text-center py-20">
           <p className="text-neutral-45 text-lg mb-4">You haven&apos;t started any content yet.</p>
-          <a href="/knowledge" className="btn-primary px-6 py-2.5 rounded-full text-sm inline-flex items-center">
-            Explore the Library
+          <a href="/courses" className="btn-primary px-6 py-2.5 rounded-full text-sm inline-flex items-center">
+            Explore Courses
           </a>
         </div>
       )}

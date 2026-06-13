@@ -18,7 +18,7 @@ export function HeroSection() {
           </p>
           <div className="flex flex-wrap gap-3">
             <Button variant="default" size="lg" asChild>
-              <Link href="/knowledge">Start Exploring</Link>
+              <Link href="/courses">Start Exploring</Link>
             </Button>
             <Button variant="secondary" size="lg" asChild>
               <Link href="/register">Create Free Account</Link>

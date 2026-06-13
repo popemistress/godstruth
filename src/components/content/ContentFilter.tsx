@@ -29,7 +29,7 @@ export function ContentFilter() {
         params.delete(key);
       }
       params.delete("page");
-      router.push(`/knowledge?${params.toString()}`);
+      router.push(`/courses?${params.toString()}`);
     },
     [router, searchParams]
   );

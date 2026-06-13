@@ -30,7 +30,7 @@ export function ContentCard({ content }: ContentCardProps) {
   const typeLabel = TYPE_LABELS[content.type] ?? content.type;
 
   return (
-    <Link href={`/knowledge/${content.slug}`} className="group block">
+    <Link href={`/courses/${content.slug}`} className="group block">
       <div className="card hover:shadow-md transition-shadow">
         {/* Thumbnail */}
         <div className="relative aspect-video bg-neutral-20 overflow-hidden">

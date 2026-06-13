@@ -21,7 +21,7 @@ type FormData = z.infer<typeof schema>;
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/knowledge";
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/courses";
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 

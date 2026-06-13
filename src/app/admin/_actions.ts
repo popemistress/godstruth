@@ -32,7 +32,7 @@ export async function createContent(formData: FormData) {
   });
 
   revalidatePath("/admin/content");
-  revalidatePath("/knowledge");
+  revalidatePath("/courses");
   redirect("/admin/content");
 }
 
@@ -65,7 +65,7 @@ export async function updateContent(formData: FormData) {
   });
 
   revalidatePath("/admin/content");
-  revalidatePath(`/knowledge/${existing.slug}`);
+  revalidatePath(`/courses/${existing.slug}`);
   redirect("/admin/content");
 }
 
@@ -74,7 +74,7 @@ export async function deleteContent(formData: FormData) {
   const id = formData.get("id") as string;
   await db.content.delete({ where: { id } });
   revalidatePath("/admin/content");
-  revalidatePath("/knowledge");
+  revalidatePath("/courses");
 }
 
 export async function updateUserRole(formData: FormData) {

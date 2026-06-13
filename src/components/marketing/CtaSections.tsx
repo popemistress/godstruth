@@ -16,7 +16,7 @@ export function CtaSections() {
               The Bible can feel overwhelming. Our overview videos give you the big-picture story so every passage makes sense in context.
             </p>
             <Button asChild>
-              <Link href="/knowledge?type=VIDEO">Watch Overviews</Link>
+              <Link href="/courses">Browse Courses</Link>
             </Button>
           </div>
           <div className="rounded-2xl bg-neutral-80 h-48 flex items-center justify-center shadow-md">
@@ -40,7 +40,7 @@ export function CtaSections() {
               Search our library by Bible book and find videos, study guides, and courses tailored to that part of Scripture.
             </p>
             <Button variant="brand" asChild>
-              <Link href="/knowledge">Browse by Book</Link>
+              <Link href="/courses">Browse Courses</Link>
             </Button>
           </div>
         </div>
