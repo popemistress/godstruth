@@ -112,7 +112,7 @@ export default async function CoursesPage({ searchParams }: PageProps) {
                 {courses.length} result{courses.length !== 1 ? "s" : ""} for &ldquo;{search}&rdquo;
               </p>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
               {courses.map((course, index) => (
                 <CourseCard key={course.id} course={course} isFirst={index === 0} />
               ))}

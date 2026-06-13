@@ -111,7 +111,7 @@ async function main() {
     },
     {
       type: "COURSE" as const,
-      title: "Demons — The Biblical Study of Evil Spirits",
+      title: "Demons — The Study of Evil Spirits",
       slug: "demons",
       description: "A biblical study of demons, fallen angels, and spiritual warfare — their origin, nature, operations, and the believer's complete authority in Christ over every power of darkness.",
       thumbnail: "/demons-cover.png",

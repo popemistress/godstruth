@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { Navbar } from "@/components/shared/Navbar";
 import { Footer } from "@/components/shared/Footer";
+import { DashboardSidebar } from "@/components/dashboard/Sidebar";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [session, settings] = await Promise.all([
@@ -19,7 +20,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
         announcementMessage={settings?.announcementBar ?? undefined}
         announcementUrl={settings?.announcementUrl ?? undefined}
       />
-      <main className="flex-1 container-page py-10">{children}</main>
+      <div className="flex flex-1">
+        <DashboardSidebar role={session.user.role} />
+        <main className="flex-1 bg-gray-50 p-6 md:p-10 overflow-auto">{children}</main>
+      </div>
       <Footer />
     </div>
   );
