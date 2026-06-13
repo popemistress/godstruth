@@ -68,6 +68,10 @@ model User {
   courseComments CourseComment[]
   certificates  Certificate[]
   churchMemberships ChurchGroupMember[]
+  readingProgress UserReadingProgress[]
+  memoryProgress UserMemoryProgress[]
+  notes         UserNote[]
+  highlights    UserHighlight[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -624,4 +628,208 @@ model LessonProgress {
   @@unique([userId, lessonId])
   @@index([userId])
   @@index([lessonId])
+}
+
+// ─── Bible Study — Reading Plans ──────────────────────────────────────────────
+
+model ReadingPlan {
+  id          String          @id @default(cuid())
+  title       String
+  slug        String          @unique
+  description String?           @db.Text
+  duration    Int             // days
+  coverImage  String?
+  published   Boolean         @default(false)
+  featured    Boolean         @default(false)
+  days        ReadingPlanDay[]
+  progress    UserReadingProgress[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model ReadingPlanDay {
+  id          String      @id @default(cuid())
+  planId      String
+  plan        ReadingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  dayNumber   Int
+  title       String?
+  passages    String[]    // e.g. ["Genesis 1:1-31", "Psalm 1"]
+  reflection  String?     @db.Text
+  createdAt   DateTime    @default(now())
+
+  @@unique([planId, dayNumber])
+  @@index([planId])
+}
+
+model UserReadingProgress {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId      String
+  plan        ReadingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  currentDay  Int         @default(1)
+  completedAt DateTime?
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([userId, planId])
+  @@index([userId])
+  @@index([planId])
+}
+
+// ─── Bible Study — Devotionals ────────────────────────────────────────────────
+
+model Devotional {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  scripture   String    // e.g. "John 3:16"
+  body        String    @db.Text
+  prayer      String?   @db.Text
+  author      String?
+  published   Boolean   @default(false)
+  publishDate DateTime  @default(now())
+  featured    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ─── Bible Study — Scripture Memorization ──────────────────────────────────────
+
+model MemoryVerse {
+  id          String    @id @default(cuid())
+  reference   String    // e.g. "John 3:16"
+  text        String    @db.Text
+  translation String    @default("KJV")
+  topic       String?   // e.g. "Love", "Faith"
+  difficulty  String    @default("EASY") // EASY, MEDIUM, HARD
+  published   Boolean   @default(false)
+  collections MemoryCollectionItem[]
+  userProgress UserMemoryProgress[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model MemoryCollection {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  description String?   @db.Text
+  verses      MemoryCollectionItem[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model MemoryCollectionItem {
+  id           String            @id @default(cuid())
+  collectionId String
+  collection   MemoryCollection  @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  verseId      String
+  verse        MemoryVerse       @relation(fields: [verseId], references: [id], onDelete: Cascade)
+  order        Int               @default(0)
+
+  @@unique([collectionId, verseId])
+  @@index([collectionId])
+}
+
+model UserMemoryProgress {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verseId       String
+  verse         MemoryVerse @relation(fields: [verseId], references: [id], onDelete: Cascade)
+  lastReviewed  DateTime?
+  reviewCount   Int         @default(0)
+  mastered      Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([userId, verseId])
+  @@index([userId])
+  @@index([verseId])
+}
+
+// ─── Bible Study — User Notes & Highlights ─────────────────────────────────────
+
+model UserNote {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reference   String    // e.g. "Genesis 1:1" or book-level
+  content     String    @db.Text
+  color       String    @default("yellow") // yellow, blue, green, pink, purple
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([reference])
+}
+
+model UserHighlight {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reference   String    // e.g. "John 3:16"
+  color       String    @default("yellow") // yellow, blue, green, pink, purple
+  createdAt   DateTime  @default(now())
+
+  @@unique([userId, reference])
+  @@index([userId])
+  @@index([reference])
+}
+
+// ─── Bible Study — Topics & Cross References ─────────────────────────────────
+
+model TopicStudy {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  description String?   @db.Text
+  passages    String[]  // list of verse references
+  relatedTopics String[]
+  published   Boolean   @default(false)
+  featured    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model CrossReference {
+  id          String    @id @default(cuid())
+  sourceRef   String    // e.g. "John 3:16"
+  targetRef   String    // e.g. "Romans 5:8"
+  theme       String?   // e.g. "Love", "Redemption"
+  createdAt   DateTime  @default(now())
+
+  @@index([sourceRef])
+  @@index([targetRef])
+  @@index([theme])
+}
+
+// ─── Bible Study — Commentary Layers ───────────────────────────────────────────
+
+model CommentaryEntry {
+  id          String    @id @default(cuid())
+  reference   String    // e.g. "Genesis 1:1"
+  source      String    // e.g. "Matthew Henry", "Barnes Notes"
+  body        String    @db.Text
+  published   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([reference])
+  @@index([source])
+}
+
+// ─── Bible Study — Audio Bible ─────────────────────────────────────────────────
+
+model BibleAudioEdition {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  reader      String?
+  publisher   String?
+  language    String    @default("en")
+  coverImage  String?
+  published   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

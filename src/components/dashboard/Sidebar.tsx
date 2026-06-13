@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, GraduationCap, TrendingUp, Award,
   Users, MessageSquare, Settings, BookOpen, CalendarDays,
-  ClipboardList, Church, BarChart3,
+  ClipboardList, Church, BarChart3, Search, NotebookPen, Highlighter,
 } from "lucide-react";
 
 const LINKS = [
@@ -13,6 +13,9 @@ const LINKS = [
   { label: "My Tracks", href: "/dashboard/tracks", icon: GraduationCap },
   { label: "Progress", href: "/dashboard/progress", icon: TrendingUp },
   { label: "Certificates", href: "/certificates", icon: Award },
+  { label: "Bible Study", href: "/bible", icon: Search },
+  { label: "My Notes", href: "/dashboard/notes", icon: NotebookPen },
+  { label: "My Highlights", href: "/dashboard/highlights", icon: Highlighter },
   { label: "Cohorts", href: "/dashboard/cohorts", icon: Users },
   { label: "Live Sessions", href: "/dashboard/live", icon: CalendarDays },
   { label: "Homework", href: "/dashboard/homework", icon: ClipboardList },
