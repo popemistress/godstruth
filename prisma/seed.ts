@@ -92,7 +92,7 @@ async function main() {
       title: "Gods Universal Plan for Creation",
       slug: "gods-universal-plan-for-creation",
       description: "An in-depth study of God's overarching plan from creation to redemption, revealing how every part of Scripture fits together in His sovereign design.",
-      order: 300,
+      order: 100,
       thumbnail: "/gods-plan.png",
       published: true,
       featured: true,

@@ -1257,7 +1257,7 @@ async function main() {
       published: true,
       featured: true,
       premium: true,
-      order: 450,
+      order: 500,
       thumbnail: "https://hm8qhte0o7.ufs.sh/f/hell-cover-placeholder",
     },
   });
