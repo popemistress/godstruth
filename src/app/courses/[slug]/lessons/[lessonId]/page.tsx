@@ -4,10 +4,11 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { ChevronRight, ArrowLeft } from "lucide-react";
 import { LessonViewer } from "@/components/courses/LessonViewer";
-import { parseMarkdown } from "@/lib/lesson-parser";
+import { paginateLessonContent } from "@/lib/lesson-pagination";
 
 interface PageProps {
   params: { slug: string; lessonId: string };
+  searchParams: { page?: string };
 }
 
 // Deduplicate: generateMetadata and the page itself both need the lesson row.
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: PageProps) {
   return { title: `${lesson.title} | Gods Truth` };
 }
 
-export default async function LessonPage({ params }: PageProps) {
+export default async function LessonPage({ params, searchParams }: PageProps) {
   const [course, lesson] = await Promise.all([
     db.content.findUnique({
       where: { slug: params.slug, type: "COURSE", published: true },
@@ -41,8 +42,13 @@ export default async function LessonPage({ params }: PageProps) {
     getLesson(params.lessonId),
   ]);
 
-  // Pre-render markdown on the server so the client receives HTML, not raw markdown.
-  const contentHtml = lesson?.content ? parseMarkdown(lesson.content) : "";
+  // Paginate large lessons server-side so the browser only receives one page of
+  // HTML at a time.
+  const { pages, totalPages } = paginateLessonContent(lesson?.content ?? "");
+
+  const requestedPage = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
+  const currentPage = Math.min(requestedPage, totalPages);
+  const contentHtml = pages[currentPage - 1] ?? "";
 
   if (!course || !lesson) notFound();
 
@@ -107,6 +113,8 @@ export default async function LessonPage({ params }: PageProps) {
         totalLessons={allLessons.length}
         lessonIndex={currentIndex}
         contentHtml={contentHtml}
+        currentPage={currentPage}
+        totalPages={totalPages}
       />
     </div>
   );

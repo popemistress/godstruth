@@ -110,17 +110,6 @@ async function main() {
       premium: false,
     },
     {
-      type: "COURSE" as const,
-      title: "Demons — The Study of Evil Spirits",
-      slug: "demons",
-      description: "A biblical study of demons, fallen angels, and spiritual warfare — their origin, nature, operations, and the believer's complete authority in Christ over every power of darkness.",
-      thumbnail: "/demons-cover.png",
-      order: 100,
-      published: true,
-      featured: true,
-      premium: false,
-    },
-    {
       type: "PODCAST" as const,
       title: "Exploring Genesis with Tim",
       slug: "exploring-genesis-tim",

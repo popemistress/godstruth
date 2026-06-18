@@ -64,22 +64,6 @@ const WHAT_YOU_LEARN_BY_SLUG: Record<string, string[]> = {
     "Common misconceptions about angels corrected by Scripture and tradition",
     "11 personal supplements: key terms, scripture memory, comparison tables, and questions for reflection",
   ],
-  "demons": [
-    "The biblical reality of demons — not myths, but real spiritual beings active in the world today",
-    "Lucifer's fall from heaven — pride, rebellion, and the origin of evil in the created order",
-    "Satan's nature, names, and methods — the serpent, the dragon, the deceiver, the accuser",
-    "The fallen angels and their ranks — how rebellion did not erase their intelligence or power",
-    "Demonic possession and oppression — the difference between external attack and internal control",
-    "The spirits of infirmity, poverty, and bondage — how demons target specific areas of human life",
-    "Doctrines of devils in the last days — deception through false teaching and seducing spirits",
-    "Divination, witchcraft, necromancy, and the black art — condemned by Scripture, overcome by truth",
-    "The believer's authority in Christ — the Name of Jesus and the power of the Holy Spirit",
-    "The armor of God — how to take away the devil's weapons and stand in every spiritual battle",
-    "Deliverance and exorcism — casting out demons by the authority of the risen Lord",
-    "Spiritual warfare in the end times — the final conflict and Christ's ultimate triumph",
-    "Living in daily victory over darkness — maintaining freedom through prayer, worship, and the Word",
-    "8 personal supplements: scripture memory, key terms, comparison tables, and reflection questions",
-  ],
 };
 
 export async function generateMetadata({ params }: PageProps) {
@@ -205,59 +189,49 @@ export default async function CourseDetailPage({ params }: PageProps) {
             )}
 
             {/* What you'll learn */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="font-serif text-xl font-bold text-gray-900 mb-5">
-                What You Will Learn
-              </h2>
-              <ul className="space-y-3">
-                {(WHAT_YOU_LEARN_BY_SLUG[course.slug] ?? WHAT_YOU_LEARN_BY_SLUG["gods-universal-plan-for-creation"]).map((item, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-gray-600 leading-relaxed">{item}</span>
-                  </li>
-                ))}
-              </ul>
+            {course.slug === "hell" ? (
+              <iframe
+                src="/humanity-clock.html"
+                title="Humanity Clock"
+                className="w-full rounded-2xl border border-gray-200 shadow-sm"
+                style={{ minHeight: "1200px" }}
+                loading="lazy"
+              />
+            ) : (
+              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 className="font-serif text-xl font-bold text-gray-900 mb-5">
+                  What You Will Learn
+                </h2>
+                <ul className="space-y-3">
+                  {(WHAT_YOU_LEARN_BY_SLUG[course.slug] ?? WHAT_YOU_LEARN_BY_SLUG["gods-universal-plan-for-creation"]).map((item, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-gray-600 leading-relaxed">{item}</span>
+                    </li>
+                  ))}
+                </ul>
 
-              {course.slug === "angels" && (
-                <>
-                  <div className="my-5 border-t border-gray-200" />
-                  <div className="flex items-center gap-3">
-                    <Volume2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Course Overview
-                    </span>
-                  </div>
-                  <audio
-                    controls
-                    className="w-full mt-3"
-                    preload="metadata"
-                  >
-                    <source src="/angels-audio.mp3" type="audio/mpeg" />
-                    Your browser does not support the audio element.
-                  </audio>
-                </>
-              )}
-
-              {course.slug === "demons" && (
-                <>
-                  <div className="my-5 border-t border-gray-200" />
-                  <div className="flex items-center gap-3">
-                    <Volume2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Course Overview
-                    </span>
-                  </div>
-                  <audio
-                    controls
-                    className="w-full mt-3"
-                    preload="metadata"
-                  >
-                    <source src="/demons-audio.mp3" type="audio/mpeg" />
-                    Your browser does not support the audio element.
-                  </audio>
-                </>
-              )}
-            </div>
+                {course.slug === "angels" && (
+                  <>
+                    <div className="my-5 border-t border-gray-200" />
+                    <div className="flex items-center gap-3">
+                      <Volume2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                      <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        Course Overview
+                      </span>
+                    </div>
+                    <audio
+                      controls
+                      className="w-full mt-3"
+                      preload="metadata"
+                    >
+                      <source src="/angels-audio.mp3" type="audio/mpeg" />
+                      Your browser does not support the audio element.
+                    </audio>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Chapter list */}
             <div>

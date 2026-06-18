@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Humanity Clock — People Ever Created</title>
+  <style>
+    :root {
+      --bg: #030303;
+      --panel: #090909;
+      --groove-1: rgba(255,255,255,.035);
+      --groove-2: rgba(0,0,0,.95);
+      --led-red: #ff1712;
+      --led-dim: rgba(90, 9, 9, .46);
+      --led-glow: rgba(255, 18, 12, .85);
+      --text: #f7f7f7;
+      --muted: #a8a8a8;
+      --line: rgba(255,255,255,.12);
+      --green: #51ff8b;
+      --amber: #ffd35a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 50% -10%, rgba(255, 22, 18, .14), transparent 42%),
+        radial-gradient(circle at 20% 110%, rgba(255, 84, 30, .07), transparent 34%),
+        linear-gradient(145deg, #000, #080808 42%, #020202);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: grid;
+      place-items: center;
+      padding: 30px 16px;
+    }
+
+    .shell {
+      width: min(1180px, 100%);
+    }
+
+    .top-copy {
+      margin: 0 auto 18px;
+      text-align: center;
+      max-width: 900px;
+    }
+
+    .eyebrow {
+      letter-spacing: .32em;
+      text-transform: uppercase;
+      color: #ff6965;
+      font-size: clamp(.7rem, 1vw, .85rem);
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.9rem, 4vw, 4.2rem);
+      line-height: 1.02;
+      font-weight: 900;
+      letter-spacing: -.055em;
+    }
+
+    .subhead {
+      margin: 0 auto;
+      color: #d0d0d0;
+      line-height: 1.6;
+      max-width: 840px;
+      font-size: clamp(.92rem, 1.3vw, 1.08rem);
+    }
+
+    .clock-panel {
+      position: relative;
+      overflow: hidden;
+      border-radius: 20px;
+      padding: clamp(18px, 3.2vw, 38px);
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.07), transparent 10%, transparent 90%, rgba(255,255,255,.05)),
+        repeating-linear-gradient(0deg, #050505 0 2px, #151515 3px, #060606 5px, #000 8px),
+        var(--panel);
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.09),
+        inset 0 -32px 60px rgba(0,0,0,.55),
+        0 38px 90px rgba(0,0,0,.72),
+        0 0 0 1px rgba(255, 25, 18, .1);
+    }
+
+    .clock-panel::before,
+    .clock-panel::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .clock-panel::before {
+      background:
+        linear-gradient(115deg, transparent 0 18%, rgba(255,255,255,.045) 30%, transparent 45% 100%),
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,.08), transparent 28%);
+      mix-blend-mode: screen;
+      opacity: .75;
+    }
+
+    .clock-panel::after {
+      background: repeating-linear-gradient(180deg, rgba(255,255,255,.022) 0 1px, transparent 1px 4px);
+      opacity: .95;
+    }
+
+    .screw {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fff, #cfcfcf 32%, #5d5d5d 65%, #111 100%);
+      box-shadow: 0 0 10px rgba(255,255,255,.25);
+      z-index: 3;
+    }
+    .screw.tl { top: 14px; left: 16px; }
+    .screw.tr { top: 14px; right: 16px; }
+    .screw.bl { bottom: 14px; left: 16px; }
+    .screw.br { bottom: 14px; right: 16px; }
+
+    .panel-inner {
+      position: relative;
+      z-index: 2;
+    }
+
+    .panel-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 14px;
+      color: #cfcfcf;
+      font-size: clamp(.72rem, 1vw, .88rem);
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    .live {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #ffb0ad;
+      white-space: nowrap;
+    }
+
+    .pulse {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--led-red);
+      box-shadow: 0 0 14px var(--led-glow);
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(.78); opacity: .6; }
+      50% { transform: scale(1.25); opacity: 1; }
+    }
+
+    .display-wrap {
+      border-radius: 16px;
+      padding: clamp(14px, 2.4vw, 26px) clamp(8px, 2vw, 22px);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.22)),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, rgba(0,0,0,.25) 1px 5px),
+        #050505;
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: inset 0 0 30px rgba(0,0,0,.85), 0 0 32px rgba(255,0,0,.08);
+    }
+
+    .segment-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(2px, .45vw, 7px);
+      min-height: 1px;
+      user-select: none;
+      filter: saturate(1.18);
+    }
+
+    .segment-row.big { --digit-w: clamp(24px, 5.8vw, 66px); --digit-h: clamp(48px, 10.5vw, 122px); }
+    .segment-row.med { --digit-w: clamp(18px, 3.4vw, 38px); --digit-h: clamp(34px, 6.5vw, 74px); }
+    .segment-row.small { --digit-w: clamp(15px, 2.4vw, 28px); --digit-h: clamp(28px, 4.6vw, 52px); }
+
+    .digit {
+      position: relative;
+      width: var(--digit-w);
+      height: var(--digit-h);
+      flex: 0 0 var(--digit-w);
+    }
+
+    .segment {
+      position: absolute;
+      background: var(--led-dim);
+      opacity: .55;
+      transition: opacity .12s ease, background-color .12s ease, filter .12s ease;
+    }
+
+    .segment.on {
+      background: var(--led-red);
+      opacity: 1;
+      box-shadow:
+        0 0 9px rgba(255, 22, 17, .9),
+        0 0 22px rgba(255, 22, 17, .38),
+        inset 0 0 6px rgba(255,255,255,.22);
+    }
+
+    .a, .g, .d {
+      left: 18%;
+      width: 64%;
+      height: 10.5%;
+      clip-path: polygon(10% 0, 90% 0, 100% 50%, 90% 100%, 10% 100%, 0 50%);
+    }
+    .a { top: 2%; }
+    .g { top: 44.7%; }
+    .d { bottom: 2%; }
+
+    .f, .b, .e, .c {
+      width: 13.5%;
+      height: 38%;
+      clip-path: polygon(50% 0, 100% 10%, 100% 90%, 50% 100%, 0 90%, 0 10%);
+    }
+    .f { left: 4%; top: 8.2%; }
+    .b { right: 4%; top: 8.2%; }
+    .e { left: 4%; bottom: 8.2%; }
+    .c { right: 4%; bottom: 8.2%; }
+
+    .sep {
+      width: calc(var(--digit-w) * .34);
+      height: var(--digit-h);
+      position: relative;
+      flex: 0 0 calc(var(--digit-w) * .34);
+    }
+
+    .sep.comma::after {
+      content: "";
+      position: absolute;
+      width: 42%;
+      height: 13%;
+      left: 30%;
+      bottom: 0;
+      background: var(--led-red);
+      border-radius: 40% 40% 70% 70%;
+      transform: skew(-14deg) translateY(18%);
+      box-shadow: 0 0 12px var(--led-glow), 0 0 24px rgba(255,0,0,.25);
+    }
+
+    .sep.dot::after {
+      content: "";
+      position: absolute;
+      width: 34%;
+      height: 9%;
+      left: 33%;
+      bottom: 8%;
+      background: var(--led-red);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--led-glow), 0 0 24px rgba(255,0,0,.25);
+    }
+
+    .dash {
+      position: relative;
+      width: var(--digit-w);
+      height: var(--digit-h);
+      flex: 0 0 var(--digit-w);
+    }
+    .dash::after {
+      content: "";
+      position: absolute;
+      left: 20%;
+      right: 20%;
+      top: 45%;
+      height: 10%;
+      background: var(--led-red);
+      border-radius: 999px;
+      box-shadow: 0 0 14px var(--led-glow);
+    }
+
+    .metric-strip {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      min-width: 0;
+      border-radius: 14px;
+      padding: 14px 12px 13px;
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.09);
+      box-shadow: inset 0 0 20px rgba(0,0,0,.32);
+    }
+
+    .metric-title {
+      color: #aaa;
+      font-size: .74rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .positive { color: var(--green); }
+    .negative { color: #ff7671; }
+
+    .rate-line {
+      margin-top: 18px;
+      border-top: 1px solid rgba(255,255,255,.1);
+      padding-top: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      color: #d7d7d7;
+      font-size: clamp(.8rem, 1.2vw, .98rem);
+    }
+
+    .chip {
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      border-radius: 999px;
+      padding: 9px 12px;
+    }
+    .chip strong { color: #fff; }
+
+    .body-grid {
+      display: grid;
+      grid-template-columns: 1.3fr .7fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .card {
+      border-radius: 16px;
+      padding: 18px;
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.09);
+      color: #dcdcdc;
+      line-height: 1.65;
+    }
+
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    .card p { margin: 0 0 10px; }
+    .card p:last-child { margin-bottom: 0; }
+
+    .source-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      font-size: .9rem;
+    }
+
+    .source-list a {
+      color: #ffb7b4;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255, 183, 180, .25);
+    }
+
+    .source-list a:hover { color: white; border-bottom-color: white; }
+
+    .config {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      font-size: .86rem;
+    }
+
+    .config div {
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: 10px;
+      background: rgba(0,0,0,.25);
+    }
+
+    .config span {
+      display: block;
+      color: #999;
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      margin-bottom: 4px;
+    }
+
+    @media (max-width: 850px) {
+      .panel-label { align-items: flex-start; flex-direction: column; }
+      .metric-strip, .body-grid, .config { grid-template-columns: 1fr; }
+      .clock-panel { border-radius: 16px; }
+      .rate-line { justify-content: flex-start; }
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 20px 10px; }
+      .clock-panel { padding: 18px 10px; }
+      .display-wrap { padding-left: 4px; padding-right: 4px; }
+      .segment-row.big { --digit-w: clamp(18px, 5.6vw, 28px); --digit-h: clamp(34px, 10.2vw, 56px); gap: 1px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="top-copy">
+      <div class="eyebrow">Live demographic estimate</div>
+      <h1>Humanity Clock</h1>
+      <p class="subhead">A digital-clock-style counter for the estimated number of people ever born, with Births Today and Deaths Today shown side by side. The display is an estimate, not a census.</p>
+    </section>
+
+    <section class="clock-panel" aria-label="Humanity clock display">
+      <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
+      <div class="panel-inner">
+        <div class="panel-label">
+          <span>Estimated people ever created / ever born</span>
+          <span class="live"><span class="pulse"></span> Updating every second</span>
+        </div>
+
+        <div class="display-wrap">
+          <div id="everBornDisplay" class="segment-row big" role="timer" aria-live="polite"></div>
+        </div>
+
+        <div class="metric-strip">
+          <div class="metric">
+            <div class="metric-title"><span>Births today</span><span class="positive" id="birthsRateLabel"></span></div>
+            <div id="birthsTodayDisplay" class="segment-row small"></div>
+          </div>
+          <div class="metric">
+            <div class="metric-title"><span>Deaths today</span><span class="negative" id="deathsRateLabel"></span></div>
+            <div id="deathsTodayDisplay" class="segment-row small"></div>
+          </div>
+        </div>
+
+        <div class="rate-line" aria-label="Current rates used by this clock">
+          <span class="chip">Birth rate: <strong id="birthsSecondText">—</strong> people/sec</span>
+          <span class="chip">Death rate: <strong id="deathsSecondText">—</strong> people/sec</span>
+          <span class="chip">World population clock: <strong id="livingDisplayText">—</strong></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="body-grid" aria-label="Notes and sources">
+      <article class="card">
+        <h2>Important math note</h2>
+        <p>The main number is <strong>people ever born</strong>, so deaths do not subtract from it. Once a person has lived, they remain part of the "ever created / ever born" total.</p>
+        <p>The death count is still included for the live world population estimate, which changes by <strong>births minus deaths</strong>. The "people ever born" total still rises by births only.</p>
+        <div class="config" aria-label="Assumptions used">
+          <div><span>Base ever-born</span><strong id="baseBornText">—</strong></div>
+          <div><span>Base date</span><strong>July 1, 2022</strong></div>
+          <div><span>Births / day</span><strong id="birthsDayText">—</strong></div>
+          <div><span>Deaths / day</span><strong id="deathsDayText">—</strong></div>
+        </div>
+      </article>
+
+      <aside class="card">
+        <h2>Sources</h2>
+        <ul class="source-list">
+          <li><a href="https://www.prb.org/news/how-many-people-have-ever-lived-on-earth/" target="_blank" rel="noreferrer">Population Reference Bureau: about 117 billion ever born</a></li>
+          <li><a href="https://www.worldometers.info/world-population/" target="_blank" rel="noreferrer">Worldometer / UN WPP 2024: current population and net growth</a></li>
+          <li><a href="https://worldpopulationreview.com/countries/births-per-day" target="_blank" rel="noreferrer">World Population Review: 2026 births per day</a></li>
+          <li><a href="https://worldpopulationreview.com/countries/deaths-per-day" target="_blank" rel="noreferrer">World Population Review: 2026 deaths per day</a></li>
+        </ul>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    // ===== Editable assumptions =====
+    // PRB estimated 117,020,448,575 people ever born as of mid-2022.
+    // The live counter adds births since then. Deaths are shown separately and used for net change.
+    const CONFIG = Object.freeze({
+      baseEverBorn: 117_020_448_575,
+      baseEverBornDateUTC: "2022-07-01T00:00:00Z",
+      birthsPerYear: 132_503_469,
+      deathsPerYear: 63_637_314,
+      baseLivingPopulation: 8_300_678_395,
+      baseLivingPopulationDateUTC: "2026-07-01T00:00:00Z"
+    });
+
+    const YEAR_SECONDS = 365.2425 * 24 * 60 * 60;
+    const DAY_SECONDS = 24 * 60 * 60;
+    const birthsPerSecond = CONFIG.birthsPerYear / YEAR_SECONDS;
+    const deathsPerSecond = CONFIG.deathsPerYear / YEAR_SECONDS;
+    const netPerSecond = birthsPerSecond - deathsPerSecond;
+
+    const segmentMap = {
+      "0": ["a", "b", "c", "d", "e", "f"],
+      "1": ["b", "c"],
+      "2": ["a", "b", "g", "e", "d"],
+      "3": ["a", "b", "g", "c", "d"],
+      "4": ["f", "g", "b", "c"],
+      "5": ["a", "f", "g", "c", "d"],
+      "6": ["a", "f", "g", "e", "c", "d"],
+      "7": ["a", "b", "c"],
+      "8": ["a", "b", "c", "d", "e", "f", "g"],
+      "9": ["a", "b", "c", "d", "f", "g"]
+    };
+
+    function formatInteger(value) {
+      return Math.max(0, Math.floor(value)).toLocaleString("en-US");
+    }
+
+    function formatRate(value) {
+      const sign = value > 0 ? "+" : value < 0 ? "-" : "";
+      return sign + Math.abs(value).toFixed(2);
+    }
+
+    function secondsSince(isoDate) {
+      return (Date.now() - Date.parse(isoDate)) / 1000;
+    }
+
+    function secondsSinceLocalMidnight() {
+      const now = new Date();
+      const start = new Date(now);
+      start.setHours(0, 0, 0, 0);
+      return (now - start) / 1000;
+    }
+
+    function makeDigit(character) {
+      if (character === ",") {
+        const sep = document.createElement("span");
+        sep.className = "sep comma";
+        sep.setAttribute("aria-hidden", "true");
+        return sep;
+      }
+
+      if (character === ".") {
+        const sep = document.createElement("span");
+        sep.className = "sep dot";
+        sep.setAttribute("aria-hidden", "true");
+        return sep;
+      }
+
+      if (character === "-" || character === "+") {
+        const dash = document.createElement("span");
+        dash.className = "dash";
+        dash.setAttribute("aria-hidden", "true");
+        return dash;
+      }
+
+      const digit = document.createElement("span");
+      digit.className = "digit";
+      digit.setAttribute("aria-hidden", "true");
+      const active = new Set(segmentMap[character] || []);
+      ["a", "b", "c", "d", "e", "f", "g"].forEach(name => {
+        const seg = document.createElement("span");
+        seg.className = "segment " + name + (active.has(name) ? " on" : "");
+        digit.appendChild(seg);
+      });
+      return digit;
+    }
+
+    function renderSegments(element, text) {
+      if (element.dataset.value === text) return;
+      element.dataset.value = text;
+      element.setAttribute("aria-label", text.replace(/,/g, ""));
+      element.replaceChildren(...String(text).split("").map(makeDigit));
+    }
+
+    function tick() {
+      const secondsFromBaseBorn = secondsSince(CONFIG.baseEverBornDateUTC);
+      const everBorn = CONFIG.baseEverBorn + secondsFromBaseBorn * birthsPerSecond;
+
+      const todaySeconds = secondsSinceLocalMidnight();
+      const birthsToday = todaySeconds * birthsPerSecond;
+      const deathsToday = todaySeconds * deathsPerSecond;
+      const livingPopulation = CONFIG.baseLivingPopulation + secondsSince(CONFIG.baseLivingPopulationDateUTC) * netPerSecond;
+
+      renderSegments(document.getElementById("everBornDisplay"), formatInteger(everBorn));
+      renderSegments(document.getElementById("birthsTodayDisplay"), formatInteger(birthsToday));
+      renderSegments(document.getElementById("deathsTodayDisplay"), formatInteger(deathsToday));
+      document.getElementById("livingDisplayText").textContent = formatInteger(livingPopulation);
+    }
+
+    function initLabels() {
+      const birthsPerDay = CONFIG.birthsPerYear / 365.2425;
+      const deathsPerDay = CONFIG.deathsPerYear / 365.2425;
+      document.getElementById("birthsRateLabel").textContent = "+" + formatRate(birthsPerSecond).replace("+", "") + "/sec";
+      document.getElementById("deathsRateLabel").textContent = "-" + formatRate(deathsPerSecond).replace("+", "") + "/sec";
+      document.getElementById("birthsSecondText").textContent = formatRate(birthsPerSecond).replace("+", "+");
+      document.getElementById("deathsSecondText").textContent = "-" + deathsPerSecond.toFixed(2);
+      document.getElementById("baseBornText").textContent = CONFIG.baseEverBorn.toLocaleString("en-US");
+      document.getElementById("birthsDayText").textContent = Math.round(birthsPerDay).toLocaleString("en-US");
+      document.getElementById("deathsDayText").textContent = Math.round(deathsPerDay).toLocaleString("en-US");
+    }
+
+    initLabels();
+    tick();
+    window.setInterval(tick, 250);
+  </script>
+</body>
+</html>
