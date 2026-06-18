@@ -2,15 +2,17 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   BookOpen, Play, Headphones, ChevronRight, ChevronLeft,
-  ArrowLeft, Clock, Video, CheckCircle, BookMarked, CheckCircle2, Sparkles,
+  ArrowLeft, Clock, Video, CheckCircle, BookMarked,
 } from "lucide-react";
 import type { CourseChapter, CourseLesson } from "@prisma/client";
 import { LessonContent } from "./LessonContent";
 import { ChartFullscreen } from "./ChartFullscreen";
+import { cn } from "@/lib/utils";
 import { ScriptureTooltipProvider } from "./ScriptureTooltip";
 
 interface NavLesson {
@@ -30,6 +32,8 @@ interface LessonViewerProps {
   totalLessons: number;
   lessonIndex: number;
   contentHtml: string;
+  currentPage: number;
+  totalPages: number;
 }
 
 function formatDuration(seconds: number) {
@@ -67,20 +71,35 @@ function markLessonComplete(lessonId: string) {
 
 export function LessonViewer({
   lesson, chapter, courseSlug, prevLesson, nextLesson, totalLessons, lessonIndex, contentHtml,
+  currentPage, totalPages,
 }: LessonViewerProps) {
+  const router = useRouter();
+  const contentPanelRef = useRef<HTMLDivElement>(null);
   const hasVideo = !!lesson.videoUrl;
   const hasPodcast = !!lesson.audioUrl;
   const hasReading = !!lesson.content;
   const isImage = lesson.type === "IMAGE";
   const isSupplement = lesson.type === "SUPPLEMENT";
+  const isPaginated = totalPages > 1;
   const progressPct = Math.round(((lessonIndex + 1) / totalLessons) * 100);
+
+  function goToPage(page: number) {
+    const clamped = Math.max(1, Math.min(page, totalPages));
+    const query = clamped <= 1 ? "" : `?page=${clamped}`;
+    const url = `/courses/${courseSlug}/lessons/${lesson.id}${query}`;
+    router.replace(url, { scroll: false });
+    // Keep the reader at the top of the reading panel when the page changes.
+    setTimeout(() => {
+      contentPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
+  }
 
   // ── Scroll-based completion ──────────────────────────────────────────────
   const sentinelRef = useRef<HTMLDivElement>(null);
   const triggeredRef = useRef(false);
   const [isCompleted, setIsCompleted] = useState(false);
 
-  // Restore completion state from localStorage on mount
+  // Restore completion state from localStorage on mount / lesson change
   useEffect(() => {
     triggeredRef.current = false;
     setIsCompleted(false);
@@ -93,9 +112,11 @@ export function LessonViewer({
     } catch { /* ignore */ }
   }, [lesson.id]);
 
+  // Scroll sentinel marks the lesson complete only when the user reaches the
+  // bottom of the final page. Intermediate pages do not mark completion.
   useEffect(() => {
     const sentinel = sentinelRef.current;
-    if (!sentinel) return;
+    if (!sentinel || currentPage !== totalPages) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !triggeredRef.current) {
@@ -108,7 +129,7 @@ export function LessonViewer({
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [lesson.id]);
+  }, [lesson.id, currentPage, totalPages]);
 
   return (
     <div className="container-page py-10 max-w-4xl mx-auto">
@@ -269,9 +290,17 @@ export function LessonViewer({
 
         {/* ══ READING ══ */}
         {hasReading && !isImage && !isSupplement && (
-          <motion.div variants={fadeUp}>
+          <motion.div variants={fadeUp} ref={contentPanelRef}>
             {(hasVideo || hasPodcast) && (
               <SectionDivider icon={<BookOpen className="h-4 w-4" />} label="Read" color="emerald" />
+            )}
+            {isPaginated && (
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <PageDots current={currentPage} total={totalPages} onSelect={goToPage} />
+              </div>
             )}
             <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
               <div className="h-1 bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-600" />
@@ -281,12 +310,19 @@ export function LessonViewer({
                 </ScriptureTooltipProvider>
               </div>
             </div>
+            {isPaginated && (
+              <PageControls
+                current={currentPage}
+                total={totalPages}
+                onChange={goToPage}
+              />
+            )}
           </motion.div>
         )}
 
         {/* ══ SUPPLEMENT ══ */}
         {isSupplement && hasReading && (
-          <motion.div variants={fadeUp} className="space-y-5">
+          <motion.div variants={fadeUp} className="space-y-5" ref={contentPanelRef}>
             {/* Supplement intro card */}
             <div className="rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-purple-50/40 p-5 flex gap-4 items-start shadow-sm">
               <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-violet-100 border border-violet-200 flex items-center justify-center">
@@ -299,6 +335,14 @@ export function LessonViewer({
                 </p>
               </div>
             </div>
+            {isPaginated && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-violet-400 uppercase tracking-wider">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <PageDots current={currentPage} total={totalPages} onSelect={goToPage} />
+              </div>
+            )}
             {/* Content panel */}
             <div className="rounded-2xl border border-violet-100 bg-white shadow-sm overflow-hidden">
               <div className="h-1 bg-gradient-to-r from-violet-400 via-purple-400 to-violet-600" />
@@ -308,6 +352,9 @@ export function LessonViewer({
                 </ScriptureTooltipProvider>
               </div>
             </div>
+            {isPaginated && (
+              <PageControls current={currentPage} total={totalPages} onChange={goToPage} />
+            )}
           </motion.div>
         )}
 
@@ -343,92 +390,8 @@ export function LessonViewer({
           </motion.div>
         )}
 
-        {/* ── Scroll sentinel + completion banner ── */}
+        {/* ── Scroll sentinel ── */}
         <div ref={sentinelRef} aria-hidden />
-
-        <AnimatePresence>
-          {isCompleted && (
-            <motion.div
-              key="completion-banner"
-              initial={{ opacity: 0, y: 32, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 16 }}
-              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-              className={
-                isSupplement
-                  ? "rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 via-purple-50 to-violet-100/60 p-6 shadow-md shadow-violet-100"
-                  : "rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-100/60 p-6 shadow-md shadow-emerald-100"
-              }
-            >
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                {/* Icon */}
-                <motion.div
-                  initial={{ scale: 0, rotate: -20 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ delay: 0.2, type: "spring", stiffness: 260, damping: 18 }}
-                  className={`flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm ${
-                    isSupplement
-                      ? "bg-violet-600 shadow-violet-300"
-                      : "bg-emerald-600 shadow-emerald-300"
-                  }`}
-                >
-                  <CheckCircle2 className="h-7 w-7 text-white" />
-                </motion.div>
-
-                {/* Text */}
-                <div className="flex-1">
-                  <motion.div
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="flex items-center gap-2 mb-0.5"
-                  >
-                    <Sparkles className={`h-3.5 w-3.5 ${isSupplement ? "text-violet-500" : "text-emerald-500"}`} />
-                    <span className={`text-[11px] font-black uppercase tracking-widest ${isSupplement ? "text-violet-600" : "text-emerald-600"}`}>
-                      {isSupplement ? "Supplement Complete" : "Lesson Complete"}
-                    </span>
-                  </motion.div>
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.35 }}
-                    className={`font-serif font-bold text-lg leading-snug ${isSupplement ? "text-violet-900" : "text-emerald-900"}`}
-                  >
-                    {lesson.title.replace(/^(Lesson|Supplement)\s+\d+\s*[—\-–]\s*/i, "")}
-                  </motion.p>
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                    className={`text-sm mt-0.5 ${isSupplement ? "text-violet-600" : "text-emerald-600"}`}
-                  >
-                    {nextLesson ? "Ready for the next section." : "You've finished the course — well done!"}
-                  </motion.p>
-                </div>
-
-                {/* Next button */}
-                {nextLesson && (
-                  <motion.div
-                    initial={{ opacity: 0, x: 12 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.45 }}
-                  >
-                    <Link
-                      href={`/courses/${courseSlug}/lessons/${nextLesson.id}`}
-                      className={`inline-flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-xl transition-all shadow-sm ${
-                        isSupplement
-                          ? "bg-violet-600 hover:bg-violet-700 text-white shadow-violet-300"
-                          : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-300"
-                      }`}
-                    >
-                      Next <ChevronRight className="h-4 w-4" />
-                    </Link>
-                  </motion.div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* ── Bottom navigation ── */}
         <motion.div variants={fadeUp} className="pt-6 border-t border-gray-100 flex items-center justify-between gap-4">
@@ -472,6 +435,56 @@ export function LessonViewer({
         </motion.div>
 
       </motion.div>
+    </div>
+  );
+}
+
+function PageDots({ current, total, onSelect }: { current: number; total: number; onSelect: (page: number) => void }) {
+  return (
+    <div className="flex items-center gap-1.5" aria-label="Page navigation">
+      {Array.from({ length: total }, (_, i) => i + 1).map((page) => (
+        <button
+          key={page}
+          type="button"
+          onClick={() => onSelect(page)}
+          aria-label={`Go to page ${page}`}
+          aria-current={page === current ? "page" : undefined}
+          className={cn(
+            "w-2 h-2 rounded-full transition-colors duration-200",
+            page === current
+              ? "bg-emerald-600"
+              : "bg-gray-200 hover:bg-emerald-300"
+          )}
+        />
+      ))}
+    </div>
+  );
+}
+
+function PageControls({ current, total, onChange }: { current: number; total: number; onChange: (page: number) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-3 mt-6">
+      <button
+        type="button"
+        onClick={() => onChange(current - 1)}
+        disabled={current <= 1}
+        className="inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-xl border transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-gray-600 border-gray-200 hover:border-emerald-300 hover:text-emerald-700 hover:bg-emerald-50"
+      >
+        <ChevronLeft className="h-4 w-4" /> Previous
+      </button>
+
+      <span className="text-xs text-gray-400 font-medium">
+        Page {current} of {total}
+      </span>
+
+      <button
+        type="button"
+        onClick={() => onChange(current + 1)}
+        disabled={current >= total}
+        className="inline-flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-xl border transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700"
+      >
+        Next <ChevronRight className="h-4 w-4" />
+      </button>
     </div>
   );
 }
