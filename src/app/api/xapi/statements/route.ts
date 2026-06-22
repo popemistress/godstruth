@@ -70,8 +70,8 @@ export async function POST(request: NextRequest) {
         actor: actor as object,
         verb: s.verb as object,
         object: s.object as object,
-        result: (s.result as object | undefined) ?? null,
-        context: (s.context as object | undefined) ?? null,
+        result: (s.result as object | undefined) ?? undefined,
+        context: (s.context as object | undefined) ?? undefined,
         version: (s.version as string | undefined) ?? "1.0.3",
         voided: false,
       },
@@ -121,13 +121,12 @@ export async function GET(request: NextRequest) {
   }
 
   const since = searchParams.get("since");
-  if (since) {
-    where.stored = { ...where.stored, gte: new Date(since) };
-  }
-
   const until = searchParams.get("until");
-  if (until) {
-    where.stored = { ...where.stored, lte: new Date(until) };
+  if (since || until) {
+    where.stored = {
+      ...(since ? { gte: new Date(since) } : {}),
+      ...(until ? { lte: new Date(until) } : {}),
+    };
   }
 
   const limit = Math.min(parseInt(searchParams.get("limit") ?? "50", 10), 200);

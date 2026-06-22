@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { db } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 
 interface LtiKeyRecord {
   kid: string;
@@ -36,10 +37,11 @@ export async function getPlatformKeys(): Promise<{ privateKey: crypto.KeyObject;
     publicKeyPem: typeof publicKey === "string" ? publicKey : (publicKey as unknown as crypto.KeyObject).export({ type: "spki", format: "pem" }) as string,
   };
 
+  const ltiKeys = record as unknown as Prisma.InputJsonValue;
   await db.siteSettings.upsert({
     where: { id: "singleton" },
-    create: { id: "singleton", ltiKeys: record as unknown as Record<string, unknown> },
-    update: { ltiKeys: record as unknown as Record<string, unknown> },
+    create: { id: "singleton", ltiKeys },
+    update: { ltiKeys },
   });
 
   const privKeyObj = crypto.createPrivateKey(record.privateKeyPem);
