@@ -22,7 +22,11 @@ import * as http from "http";
 const utapi = new UTApi();
 const db = new PrismaClient();
 
-const RECRAFT_KEY = "LDPT16PMB1I4W48nWnmGSr2Hg3inkVFkjMTYCGidAdNTrKQ8gS8bhr8ksivqXmJZ";
+const RECRAFT_KEY = process.env.RECRAFT_API_KEY;
+if (!RECRAFT_KEY) {
+  console.error("RECRAFT_API_KEY not set");
+  process.exit(1);
+}
 const PROGRESS_FILE = "/tmp/lesson-img-progress.json";
 const DELAY_BETWEEN_IMAGES_MS = 3500;
 const DELAY_BETWEEN_LESSONS_MS = 2000;
@@ -243,8 +247,8 @@ function getPrompts(title: string): string[] {
         `Divine attributes of God represented as brilliant light splitting into omniscience omnipotence omnipresence, ${S}`,
       ],
       3: [
-        `Invisible spiritual realm revealed, angels and demons in conflict, light and shadow warfare, ${S}`,
-        `Satan's original beauty and subsequent fall from heaven depicted as cosmic tragedy, ${S}`,
+        `Majestic heavenly throne room with radiant divine light, angelic worship, and celestial order, ${S}`,
+        `Eternal spiritual realm before creation, holy beings ministering around God's throne in reverent worship, ${S}`,
       ],
       4: [
         `Magnificent angelic beings ministering before God's throne, heavenly host, celestial architecture, ${S}`,
@@ -375,14 +379,6 @@ function getPrompts(title: string): string[] {
       `Pre-creation void, eternity before time, divine presence hovering over primordial darkness, ${S}`,
       `Heavenly realm with angelic beings in worship, crystal sea before divine throne, golden celestial city, ${S}`,
       `Earth in its first pristine perfect state, paradise-like landscape in early creation, ${S}`,
-    ];
-  }
-
-  if (t.includes("satan") || t.includes("spirit world") || lessonNum === 6) {
-    return [
-      `Spiritual battle in heavenly realms, angels of light confronting fallen powers, epic cosmic warfare, ${S}`,
-      `Lucifer's fall from heaven, once-beautiful covering cherub cast down as lightning, tragic expulsion, ${S}`,
-      `Armor of God in dramatic light, shield of faith, sword of the Spirit, spiritual warfare preparation, ${S}`,
     ];
   }
 
