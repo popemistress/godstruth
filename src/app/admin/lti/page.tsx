@@ -30,7 +30,7 @@ async function createProvider(formData: FormData) {
       jwksUrl: formData.get("jwksUrl") as string,
       deepLinkUrl: (formData.get("deepLinkUrl") as string) || null,
       enabled: formData.get("enabled") === "on",
-      customParams: customParams as Record<string, string> | null,
+      customParams: customParams ?? undefined,
     },
   });
   revalidatePath("/admin/lti");
