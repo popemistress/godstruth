@@ -5,15 +5,16 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, GraduationCap, TrendingUp, Award,
   Users, MessageSquare, Settings, BookOpen, CalendarDays,
-  ClipboardList, Church, BarChart3, Search, NotebookPen, Highlighter,
+  ClipboardList, Church, BarChart3, Search, NotebookPen, Highlighter, BookMarked,
 } from "lucide-react";
 
 const LINKS = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { label: "My Tracks", href: "/dashboard/tracks", icon: GraduationCap },
   { label: "Progress", href: "/dashboard/progress", icon: TrendingUp },
+  { label: "Gradebook", href: "/dashboard/gradebook", icon: BookMarked },
   { label: "Certificates", href: "/certificates", icon: Award },
-  { label: "Bible Study", href: "/bible", icon: Search },
+  { label: "Bible Study", href: "/bible/workspace", icon: Search },
   { label: "My Notes", href: "/dashboard/notes", icon: NotebookPen },
   { label: "My Highlights", href: "/dashboard/highlights", icon: Highlighter },
   { label: "Cohorts", href: "/dashboard/cohorts", icon: Users },

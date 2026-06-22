@@ -11,6 +11,7 @@ import {
   Filter,
   RefreshCw,
 } from "lucide-react";
+import { trackMemoryVerseMastered } from "@/lib/xapi-client";
 
 interface Verse {
   id: string;
@@ -61,6 +62,11 @@ export default function MemoryVersesPage() {
         next.delete(id);
       } else {
         next.add(id);
+        // Track mastery via xAPI
+        const verse = verses.find((v) => v.id === id);
+        if (verse) {
+          trackMemoryVerseMastered({ reference: verse.reference, text: verse.text }).catch(() => { /* ignore */ });
+        }
       }
       localStorage.setItem(LS_MASTERED, JSON.stringify([...next]));
       return next;

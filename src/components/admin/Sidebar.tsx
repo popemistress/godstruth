@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Film, Users, Settings, BookOpen } from "lucide-react";
+import { LayoutDashboard, Film, Users, Settings, BookOpen, BarChart3, Link2, ClipboardList } from "lucide-react";
 
 const LINKS = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Content", href: "/admin/content", icon: Film },
   { label: "Users", href: "/admin/users", icon: Users },
+  { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+  { label: "Gradebook", href: "/admin/gradebook", icon: ClipboardList },
+  { label: "LTI Providers", href: "/admin/lti", icon: Link2 },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 

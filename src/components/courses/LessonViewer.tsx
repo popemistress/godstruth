@@ -14,6 +14,7 @@ import { LessonContent } from "./LessonContent";
 import { ChartFullscreen } from "./ChartFullscreen";
 import { cn } from "@/lib/utils";
 import { ScriptureTooltipProvider } from "./ScriptureTooltip";
+import { trackLessonComplete } from "@/lib/xapi-client";
 
 interface NavLesson {
   id: string;
@@ -124,12 +125,22 @@ export function LessonViewer({
           triggeredRef.current = true;
           setIsCompleted(true);
           markLessonComplete(lesson.id);
+          void trackLessonComplete({
+            lessonId: lesson.id,
+            lessonTitle: lesson.title,
+            courseId: courseSlug,
+            courseTitle: "",
+            userId: "anonymous",
+            userEmail: "",
+            userName: "",
+          });
         }
       },
       { threshold: 0.5 }
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lesson.id, currentPage, totalPages]);
 
   return (

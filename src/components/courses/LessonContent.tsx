@@ -9,6 +9,7 @@
 
 import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "react";
+import { trackQuizAnswer } from "@/lib/xapi-client";
 
 interface LessonContentProps {
   contentHtml: string;
@@ -74,6 +75,17 @@ export function LessonContent({ contentHtml, lessonId, className }: LessonConten
         questionDiv
           .querySelector<HTMLElement>(isCorrect ? ".quiz-feedback-correct" : ".quiz-feedback-wrong")
           ?.classList.remove("hidden");
+
+        // Track quiz answer via xAPI
+        const det = quizOpt.closest<HTMLElement>("details[data-qi]");
+        trackQuizAnswer({
+          questionId: det?.dataset.qi ?? "unknown",
+          questionText: "",
+          lessonId: ns,
+          response: quizOpt.textContent?.trim() ?? "",
+          correct: isCorrect,
+        }).catch(() => { /* ignore */ });
+
         return;
       }
 

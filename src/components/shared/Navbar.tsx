@@ -18,7 +18,7 @@ interface NavbarProps {
 
 const NAV_LINKS = [
   { label: "Courses", href: "/courses" },
-  { label: "Bible Study", href: "/bible" },
+  { label: "Bible Study", href: "/bible/workspace" },
   { label: "Bibles", href: "/bibles" },
 ];
 

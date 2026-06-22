@@ -302,6 +302,7 @@ model SiteSettings {
   announcementBar String?
   announcementUrl String?
   maintenanceMode Boolean  @default(false)
+  ltiKeys         Json?
   updatedAt       DateTime @updatedAt
 }
 
@@ -832,4 +833,103 @@ model BibleAudioEdition {
   published   Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+// ─── xAPI Learning Record Store ──────────────────────────────────────────────
+
+model XApiStatement {
+  id          String   @id @default(uuid())
+  userId      String?
+  actor       Json
+  verb        Json
+  object      Json
+  result      Json?
+  context     Json?
+  timestamp   DateTime @default(now())
+  stored      DateTime @default(now())
+  version     String   @default("1.0.3")
+  voided      Boolean  @default(false)
+
+  @@index([userId])
+  @@index([stored])
+}
+
+// ─── LTI 1.3 Integration ─────────────────────────────────────────────────────
+
+model LtiProvider {
+  id           String      @id @default(cuid())
+  name         String
+  description  String?
+  clientId     String      @unique
+  issuer       String
+  oidcUrl      String
+  launchUrl    String
+  jwksUrl      String
+  deepLinkUrl  String?
+  enabled      Boolean     @default(true)
+  customParams Json?
+  launches     LtiLaunch[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model LtiLaunch {
+  id          String      @id @default(cuid())
+  providerId  String
+  provider    LtiProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  userId      String
+  nonce       String      @unique
+  state       String      @unique
+  resourceUrl String?
+  completed   Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  expiresAt   DateTime
+
+  @@index([providerId])
+  @@index([userId])
+}
+
+// ─── Gradebook ────────────────────────────────────────────────────────────────
+
+model Grade {
+  id           String   @id @default(cuid())
+  userId       String
+  activityId   String
+  activityType String
+  activityName String?
+  score        Float?
+  rawScore     Float?
+  maxScore     Float?
+  minScore     Float?
+  passed       Boolean?
+  completed    Boolean  @default(false)
+  timeSpent    Int?
+  attempts     Int      @default(1)
+  comment      String?
+  source       String   @default("internal")
+  gradedAt     DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, activityId])
+  @@index([userId])
+  @@index([activityId])
+  @@index([gradedAt])
+}
+
+// ─── SCORM Packages ──────────────────────────────────────────────────────────
+
+model ScormPackage {
+  id          String   @id @default(cuid())
+  title       String
+  version     String   @default("1.2")
+  zipUrl      String
+  entryPoint  String?
+  description String?
+  uploadedBy  String
+  courseId    String?
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([courseId])
 }
