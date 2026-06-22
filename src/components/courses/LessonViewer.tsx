@@ -134,6 +134,18 @@ export function LessonViewer({
             userEmail: "",
             userName: "",
           });
+          // Award gamification points
+          fetch("/api/gamification/award", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "points", pointType: "LESSON_COMPLETE", label: `Completed: ${lesson.title}` }),
+          }).catch(() => {});
+          // Update reading streak
+          fetch("/api/gamification/checkin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "READING" }),
+          }).catch(() => {});
         }
       },
       { threshold: 0.5 }

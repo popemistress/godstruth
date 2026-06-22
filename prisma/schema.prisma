@@ -933,3 +933,48 @@ model ScormPackage {
 
   @@index([courseId])
 }
+
+// ─── Gamification ─────────────────────────────────────────────────────────────
+
+model UserStreak {
+  id            String    @id @default(cuid())
+  userId        String
+  type          String    // READING | SCRIPTURE | PRAYER | JOURNAL
+  current       Int       @default(0)
+  longest       Int       @default(0)
+  totalDays     Int       @default(0)
+  lastCheckin   DateTime?
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([userId, type])
+  @@index([userId])
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeKey  String
+  awardedAt DateTime @default(now())
+
+  @@unique([userId, badgeKey])
+  @@index([userId])
+}
+
+model UserPoints {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  total     Int      @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+model PointEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  points    Int
+  label     String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}

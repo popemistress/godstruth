@@ -5,13 +5,14 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, GraduationCap, TrendingUp, Award,
   Users, MessageSquare, Settings, BookOpen, CalendarDays,
-  ClipboardList, Church, BarChart3, Search, NotebookPen, Highlighter, BookMarked,
+  ClipboardList, Church, BarChart3, Search, NotebookPen, Highlighter, BookMarked, Trophy,
 } from "lucide-react";
 
 const LINKS = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { label: "My Tracks", href: "/dashboard/tracks", icon: GraduationCap },
   { label: "Progress", href: "/dashboard/progress", icon: TrendingUp },
+  { label: "Achievements", href: "/dashboard/achievements", icon: Trophy },
   { label: "Gradebook", href: "/dashboard/gradebook", icon: BookMarked },
   { label: "Certificates", href: "/certificates", icon: Award },
   { label: "Bible Study", href: "/bible/workspace", icon: Search },

@@ -66,6 +66,18 @@ export default function MemoryVersesPage() {
         const verse = verses.find((v) => v.id === id);
         if (verse) {
           trackMemoryVerseMastered({ reference: verse.reference, text: verse.text }).catch(() => { /* ignore */ });
+          // Award gamification points
+          fetch("/api/gamification/award", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "points", pointType: "VERSE_MASTERED", label: `Mastered: ${verse.reference}` }),
+          }).catch(() => {});
+          // Update scripture streak
+          fetch("/api/gamification/checkin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "SCRIPTURE" }),
+          }).catch(() => {});
         }
       }
       localStorage.setItem(LS_MASTERED, JSON.stringify([...next]));
