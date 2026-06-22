@@ -2,16 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
 import { BookOpen, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BetaBanner } from "@/components/shared/BetaBanner";
-import type { Session } from "next-auth";
+import { UserButton, SignInButton, SignOutButton, useUser } from "@clerk/nextjs";
 
 interface NavbarProps {
-  session: Session | null;
   announcementMessage?: string | null;
   announcementUrl?: string | null;
 }
@@ -22,9 +19,10 @@ const NAV_LINKS = [
   { label: "Bibles", href: "/bibles" },
 ];
 
-export function Navbar({ session, announcementMessage, announcementUrl }: NavbarProps) {
+export function Navbar({ announcementMessage, announcementUrl }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const { isSignedIn } = useUser();
 
   return (
     <>
@@ -63,30 +61,20 @@ export function Navbar({ session, announcementMessage, announcementUrl }: Navbar
 
           {/* Right side */}
           <div className="hidden md:flex items-center gap-3">
-            {session ? (
+            {isSignedIn ? (
               <div className="flex items-center gap-2">
-                {session.user.role === "ADMIN" && (
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/admin">Admin</Link>
-                  </Button>
-                )}
-                <Link href="/dashboard/profile">
-                  <Avatar className="h-8 w-8 cursor-pointer">
-                    <AvatarImage src={session.user.image ?? ""} alt={session.user.name ?? ""} />
-                    <AvatarFallback>{session.user.name?.[0]?.toUpperCase() ?? "U"}</AvatarFallback>
-                  </Avatar>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/admin">Admin</Link>
+                </Button>
+                <Link href="/dashboard/profile" className="text-sm text-neutral-45 hover:text-neutral-80 transition-colors">
+                  Dashboard
                 </Link>
-                <button
-                  onClick={() => signOut({ callbackUrl: "/" })}
-                  className="text-sm text-neutral-45 hover:text-neutral-80 transition-colors"
-                >
-                  Sign out
-                </button>
+                <UserButton />
               </div>
             ) : (
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/login">Sign in</Link>
-              </Button>
+              <SignInButton mode="redirect">
+                <Button variant="outline" size="sm">Sign in</Button>
+              </SignInButton>
             )}
           </div>
 
@@ -110,17 +98,21 @@ export function Navbar({ session, announcementMessage, announcementUrl }: Navbar
               </Link>
             ))}
             <div className="mt-2 flex flex-col gap-2">
-              {session ? (
-                <button
-                  onClick={() => { setMobileOpen(false); signOut({ callbackUrl: "/" }); }}
-                  className="text-sm text-neutral-45 text-left px-3 py-2"
-                >
-                  Sign out
-                </button>
+              {isSignedIn ? (
+                <div className="flex items-center gap-2 px-3 py-2">
+                  <UserButton />
+                  <Link
+                    href="/dashboard/profile"
+                    onClick={() => setMobileOpen(false)}
+                    className="text-sm text-neutral-45 hover:text-neutral-80 transition-colors"
+                  >
+                    Dashboard
+                  </Link>
+                </div>
               ) : (
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/login" onClick={() => setMobileOpen(false)}>Sign in</Link>
-                </Button>
+                <SignInButton mode="redirect">
+                  <Button variant="outline" size="sm">Sign in</Button>
+                </SignInButton>
               )}
             </div>
           </div>

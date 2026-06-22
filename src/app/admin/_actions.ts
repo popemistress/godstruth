@@ -2,17 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getCurrentDbUser } from "@/lib/clerk-user";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/utils";
 import type { ContentType, Role } from "@prisma/client";
 
 async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
+  const user = await getCurrentDbUser();
+  if (!user || user.role !== "ADMIN") {
     throw new Error("Unauthorized");
   }
-  return session.user;
+  return user;
 }
 
 export async function createContent(formData: FormData) {

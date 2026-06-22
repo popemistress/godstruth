@@ -1,12 +1,12 @@
-import { auth } from "@/lib/auth";
+import { getCurrentDbUser } from "@/lib/clerk-user";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 
 interface StatsByDay { date: string; count: number }
 
 export default async function AdminAnalyticsPage() {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") redirect("/");
+  const user = await getCurrentDbUser();
+  if (!user || user.role !== "ADMIN") redirect("/");
 
   const now = new Date();
   const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);

@@ -1,12 +1,12 @@
-import { auth } from "@/lib/auth";
+import { getCurrentDbUser } from "@/lib/clerk-user";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import type { Grade } from "@prisma/client";
 import { AdminGradebookClient } from "./AdminGradebookClient";
 
 export default async function AdminGradebookPage() {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") redirect("/");
+  const user = await getCurrentDbUser();
+  if (!user || user.role !== "ADMIN") redirect("/");
 
   const grades = await db.grade.findMany({
     orderBy: { gradedAt: "desc" },

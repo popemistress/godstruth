@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/clerk-user";
 
 function checkBasicAuth(request: NextRequest): boolean {
   const xapiKey = process.env.XAPI_KEY;
@@ -23,9 +23,9 @@ async function resolveAuth(request: NextRequest): Promise<{ ok: boolean; userId?
     if (checkBasicAuth(request)) return { ok: true };
     return { ok: false };
   }
-  // Fall back to NextAuth session
-  const session = await auth();
-  if (session?.user) return { ok: true, userId: session.user.id };
+  // Fall back to Clerk session
+  const userId = await getCurrentUserId();
+  if (userId) return { ok: true, userId };
   return { ok: false };
 }
 

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/clerk-user";
 
 export async function POST(request: NextRequest) {
-  const session = await auth();
+  const userId = await getCurrentUserId();
 
   let body: URLSearchParams;
   const contentType = request.headers.get("content-type") ?? "";
@@ -35,14 +35,14 @@ export async function POST(request: NextRequest) {
 
   const nonce = crypto.randomUUID();
   const state = crypto.randomUUID();
-  const userId = session?.user?.id ?? "anonymous";
+  const dbUserId = userId ?? "anonymous";
 
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
   await db.ltiLaunch.create({
     data: {
       providerId: provider.id,
-      userId,
+      userId: dbUserId,
       nonce,
       state,
       resourceUrl: targetLinkUri || null,

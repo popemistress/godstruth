@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/clerk-user";
 import { db } from "@/lib/db";
 
 interface Params {
@@ -7,8 +7,8 @@ interface Params {
 }
 
 export async function POST(_req: Request, { params }: Params) {
-  const session = await auth();
-  if (!session?.user) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -26,9 +26,9 @@ export async function POST(_req: Request, { params }: Params) {
   }
 
   const enrollment = await db.cohortEnrollment.upsert({
-    where: { userId_cohortId: { userId: session.user.id, cohortId: params.id } },
+    where: { userId_cohortId: { userId, cohortId: params.id } },
     create: {
-      userId: session.user.id,
+      userId,
       cohortId: params.id,
     },
     update: {},

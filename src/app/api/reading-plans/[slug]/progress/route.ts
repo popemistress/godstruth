@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/clerk-user";
 import { db } from "@/lib/db";
 import { z } from "zod";
 
@@ -10,8 +10,8 @@ interface Params {
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
-  const session = await auth();
-  if (!session?.user) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -30,8 +30,8 @@ export async function POST(req: NextRequest, { params }: Params) {
   const completedAt = currentDay >= plan.duration ? new Date() : null;
 
   const progress = await db.userReadingProgress.upsert({
-    where: { userId_planId: { userId: session.user.id, planId: plan.id } },
-    create: { userId: session.user.id, planId: plan.id, currentDay, completedAt },
+    where: { userId_planId: { userId, planId: plan.id } },
+    create: { userId, planId: plan.id, currentDay, completedAt },
     update: { currentDay, completedAt },
   });
 

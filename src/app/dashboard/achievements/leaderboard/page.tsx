@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/clerk-user";
 import { db } from "@/lib/db";
 import { Trophy } from "lucide-react";
 
@@ -97,8 +97,8 @@ async function getLeaderboard(currentUserId?: string): Promise<{
 }
 
 export default async function LeaderboardPage() {
-  const session = await auth();
-  const { top20, currentUserRank } = await getLeaderboard(session?.user?.id ?? undefined);
+  const currentUserId = await getCurrentUserId();
+  const { top20, currentUserRank } = await getLeaderboard(currentUserId ?? undefined);
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">

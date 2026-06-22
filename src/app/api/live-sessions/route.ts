@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getCurrentDbUser } from "@/lib/clerk-user";
 import { db } from "@/lib/db";
 import { z } from "zod";
 
@@ -14,8 +14,8 @@ const createSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
+  const user = await getCurrentDbUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -36,8 +36,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user || (session.user.role !== "ADMIN" && session.user.role !== "INSTRUCTOR")) {
+  const user = await getCurrentDbUser();
+  if (!user || (user.role !== "ADMIN" && user.role !== "INSTRUCTOR")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

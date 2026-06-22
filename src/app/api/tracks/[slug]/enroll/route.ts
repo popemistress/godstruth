@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/clerk-user";
 import { db } from "@/lib/db";
 
 interface Params {
@@ -7,8 +7,8 @@ interface Params {
 }
 
 export async function POST(_req: NextRequest, { params }: Params) {
-  const session = await auth();
-  if (!session?.user) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -20,9 +20,9 @@ export async function POST(_req: NextRequest, { params }: Params) {
   }
 
   const enrollment = await db.trackEnrollment.upsert({
-    where: { userId_trackId: { userId: session.user.id, trackId: track.id } },
+    where: { userId_trackId: { userId, trackId: track.id } },
     create: {
-      userId: session.user.id,
+      userId,
       trackId: track.id,
       currentDay: 1,
     },

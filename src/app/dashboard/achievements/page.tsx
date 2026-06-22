@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/clerk-user";
 import { getUserGamificationSummary } from "@/lib/gamification";
 import { AchievementsClient } from "./AchievementsClient";
 import { Trophy, Flame, Award, BookOpen, Users } from "lucide-react";
@@ -8,10 +8,10 @@ import { Trophy, Flame, Award, BookOpen, Users } from "lucide-react";
 export const metadata = { title: "Achievements — Gods Truth" };
 
 export default async function AchievementsPage() {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login?callbackUrl=/dashboard/achievements");
+  const userId = await getCurrentUserId();
+  if (!userId) redirect("/sign-in");
 
-  const summary = await getUserGamificationSummary(session.user.id);
+  const summary = await getUserGamificationSummary(userId);
   const readingStreak = summary.streaks.find((s) => s.type === "READING");
 
   return (

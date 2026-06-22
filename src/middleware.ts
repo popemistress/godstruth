@@ -1,33 +1,17 @@
-import { auth } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-export default auth((req) => {
-  const { nextUrl, auth: session } = req;
-  const isLoggedIn = !!session?.user;
-  const isAdmin = session?.user?.role === "ADMIN";
+const isProtected = createRouteMatcher(["/admin(.*)", "/dashboard(.*)"]);
 
-  // Admin routes: must be ADMIN
-  if (nextUrl.pathname.startsWith("/admin")) {
-    if (!isLoggedIn) {
-      return NextResponse.redirect(new URL(`/login?callbackUrl=${nextUrl.pathname}`, req.url));
-    }
-    if (!isAdmin) {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
-    return NextResponse.next();
+export default clerkMiddleware(async (auth, req) => {
+  if (isProtected(req)) {
+    await auth.protect();
   }
-
-  // Dashboard: must be logged in
-  if (nextUrl.pathname.startsWith("/dashboard")) {
-    if (!isLoggedIn) {
-      return NextResponse.redirect(new URL(`/login?callbackUrl=${nextUrl.pathname}`, req.url));
-    }
-    return NextResponse.next();
-  }
-
-  return NextResponse.next();
 });
 
 export const config = {
-  matcher: ["/admin/:path*", "/dashboard/:path*"],
+  matcher: [
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/(api|trpc)(.*)",
+    "/__clerk/:path*",
+  ],
 };

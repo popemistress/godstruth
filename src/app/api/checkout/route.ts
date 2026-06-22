@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/clerk-user";
 import { stripe, PLANS } from "@/lib/stripe";
 import { db } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.redirect(new URL("/login", req.url));
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    return NextResponse.redirect(new URL("/sign-in", req.url));
   }
 
   const plan = req.nextUrl.searchParams.get("plan") as "SUPPORTER" | "PARTNER" | null;
@@ -15,8 +15,8 @@ export async function GET(req: NextRequest) {
   }
 
   const [user, subscription] = await Promise.all([
-    db.user.findUnique({ where: { id: session.user.id } }),
-    db.subscription.findUnique({ where: { userId: session.user.id } }),
+    db.user.findUnique({ where: { id: userId } }),
+    db.subscription.findUnique({ where: { userId } }),
   ]);
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 

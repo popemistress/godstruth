@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getCurrentDbUser } from "@/lib/clerk-user";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
@@ -6,8 +6,8 @@ import type { LtiProvider } from "@prisma/client";
 
 async function createProvider(formData: FormData) {
   "use server";
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") return;
+  const user = await getCurrentDbUser();
+  if (!user || user.role !== "ADMIN") return;
 
   const customParamsRaw = (formData.get("customParams") as string) ?? "";
   let customParams: Record<string, string> | null = null;
@@ -38,16 +38,16 @@ async function createProvider(formData: FormData) {
 
 async function deleteProvider(formData: FormData) {
   "use server";
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") return;
+  const user = await getCurrentDbUser();
+  if (!user || user.role !== "ADMIN") return;
   const id = formData.get("id") as string;
   await db.ltiProvider.delete({ where: { id } });
   revalidatePath("/admin/lti");
 }
 
 export default async function AdminLtiPage() {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") redirect("/");
+  const user = await getCurrentDbUser();
+  if (!user || user.role !== "ADMIN") redirect("/");
 
   const providers = await db.ltiProvider.findMany({ orderBy: { createdAt: "desc" } });
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";

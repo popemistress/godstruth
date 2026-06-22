@@ -1,10 +1,10 @@
-import { auth } from "@/lib/auth";
+import { getCurrentDbUser } from "@/lib/clerk-user";
 import { redirect } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/Sidebar";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") redirect("/");
+  const user = await getCurrentDbUser();
+  if (!user || user.role !== "ADMIN") redirect("/");
 
   return (
     <div className="flex min-h-screen bg-neutral-10">

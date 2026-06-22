@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/clerk-user";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import type { Grade } from "@prisma/client";
@@ -30,11 +30,11 @@ function ScoreBar({ score }: { score: number | null }) {
 }
 
 export default async function GradebookPage() {
-  const session = await auth();
-  if (!session?.user) redirect("/login?callbackUrl=/dashboard/gradebook");
+  const userId = await getCurrentUserId();
+  if (!userId) redirect("/sign-in");
 
   const grades = await db.grade.findMany({
-    where: { userId: session.user.id },
+    where: { userId },
     orderBy: { gradedAt: "desc" },
   });
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/clerk-user";
 import { db } from "@/lib/db";
 import { z } from "zod";
 
@@ -13,8 +13,8 @@ interface Params {
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
-  const session = await auth();
-  if (!session?.user) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const isComplete = markComplete || currentDay >= totalDays;
 
   const enrollment = await db.trackEnrollment.update({
-    where: { userId_trackId: { userId: session.user.id, trackId: track.id } },
+    where: { userId_trackId: { userId, trackId: track.id } },
     data: {
       currentDay,
       completedAt: isComplete ? new Date() : null,
@@ -47,12 +47,12 @@ export async function POST(req: NextRequest, { params }: Params) {
   // Auto-generate certificate on completion
   if (isComplete && !enrollment.completedAt) {
     const existing = await db.certificate.findFirst({
-      where: { userId: session.user.id, trackId: track.id },
+      where: { userId, trackId: track.id },
     });
     if (!existing) {
       await db.certificate.create({
         data: {
-          userId: session.user.id,
+          userId,
           trackId: track.id,
           title: track.title,
           certificateNumber: `GT-${track.id.slice(-6).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`,

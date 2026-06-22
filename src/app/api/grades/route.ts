@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/clerk-user";
 
 export async function GET(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const activityType = searchParams.get("activityType");
   const limit = parseInt(searchParams.get("limit") ?? "50", 10);
 
-  const where: Record<string, unknown> = { userId: session.user.id };
+  const where: Record<string, unknown> = { userId };
   if (activityType) where.activityType = activityType;
 
   const grades = await db.grade.findMany({
@@ -25,8 +25,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -51,12 +51,12 @@ export async function POST(request: NextRequest) {
   const grade = await db.grade.upsert({
     where: {
       userId_activityId: {
-        userId: session.user.id,
+        userId,
         activityId: body.activityId,
       },
     },
     create: {
-      userId: session.user.id,
+      userId,
       activityId: body.activityId,
       activityType: body.activityType,
       activityName: body.activityName ?? null,

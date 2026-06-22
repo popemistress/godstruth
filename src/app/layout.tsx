@@ -1,7 +1,6 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
-import { SessionProvider } from "next-auth/react";
-import { auth } from "@/lib/auth";
 import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 
@@ -33,16 +32,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <body>
-        <SessionProvider session={session}>
+        <ClerkProvider>
           {children}
           <Toaster />
-        </SessionProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

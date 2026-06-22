@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getCurrentDbUser } from "@/lib/clerk-user";
 import { db } from "@/lib/db";
 import JSZip from "jszip";
 
@@ -15,8 +15,8 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ courseId: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
+  const user = await getCurrentDbUser();
+  if (!user || user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getCurrentDbUser } from "@/lib/clerk-user";
 import { db } from "@/lib/db";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -8,11 +8,11 @@ import type { ContentWithRelations } from "@/types";
 export const metadata = { title: "My Profile" };
 
 export default async function ProfilePage() {
-  const session = await auth();
-  if (!session?.user) return null;
+  const user = await getCurrentDbUser();
+  if (!user) return null;
 
   const progressItems = await db.userProgress.findMany({
-    where: { userId: session.user.id },
+    where: { userId: user.id },
     include: {
       content: {
         include: {
@@ -34,13 +34,13 @@ export default async function ProfilePage() {
       {/* Profile header */}
       <div className="flex items-center gap-5 mb-10">
         <Avatar className="h-16 w-16">
-          <AvatarImage src={session.user.image ?? ""} />
-          <AvatarFallback className="text-xl">{session.user.name?.[0]?.toUpperCase() ?? "U"}</AvatarFallback>
+          <AvatarImage src={user.image ?? ""} />
+          <AvatarFallback className="text-xl">{user.name?.[0]?.toUpperCase() ?? "U"}</AvatarFallback>
         </Avatar>
         <div>
-          <h1 className="font-serif text-2xl font-bold text-neutral-80">{session.user.name}</h1>
-          <p className="text-neutral-45 text-sm">{session.user.email}</p>
-          <Badge variant="brand" className="mt-1">{session.user.role}</Badge>
+          <h1 className="font-serif text-2xl font-bold text-neutral-80">{user.name}</h1>
+          <p className="text-neutral-45 text-sm">{user.email}</p>
+          <Badge variant="brand" className="mt-1">{user.role}</Badge>
         </div>
       </div>
 

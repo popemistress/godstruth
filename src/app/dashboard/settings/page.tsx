@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getCurrentDbUser } from "@/lib/clerk-user";
 import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,14 +9,10 @@ import Link from "next/link";
 export const metadata = { title: "Account Settings" };
 
 export default async function AccountSettingsPage() {
-  const session = await auth();
-  if (!session?.user) return null;
-
-  const [user, subscription] = await Promise.all([
-    db.user.findUnique({ where: { id: session.user.id } }),
-    db.subscription.findUnique({ where: { userId: session.user.id } }),
-  ]);
+  const user = await getCurrentDbUser();
   if (!user) return null;
+
+  const subscription = await db.subscription.findUnique({ where: { userId: user.id } });
 
   const currentPlan = subscription?.plan ?? "FREE";
 

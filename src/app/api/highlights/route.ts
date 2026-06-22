@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/clerk-user";
 import { db } from "@/lib/db";
 import { z } from "zod";
 
@@ -9,21 +9,21 @@ const createSchema = z.object({
 });
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const highlights = await db.userHighlight.findMany({
-    where: { userId: session.user.id },
+    where: { userId },
     orderBy: { createdAt: "desc" },
   });
   return NextResponse.json(highlights);
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -34,8 +34,8 @@ export async function POST(req: NextRequest) {
   }
 
   const highlight = await db.userHighlight.upsert({
-    where: { userId_reference: { userId: session.user.id, reference: parsed.data.reference } },
-    create: { userId: session.user.id, ...parsed.data },
+    where: { userId_reference: { userId, reference: parsed.data.reference } },
+    create: { userId, ...parsed.data },
     update: { color: parsed.data.color },
   });
 
@@ -43,8 +43,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -54,6 +54,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
-  await db.userHighlight.deleteMany({ where: { id, userId: session.user.id } });
+  await db.userHighlight.deleteMany({ where: { id, userId } });
   return NextResponse.json({ success: true });
 }

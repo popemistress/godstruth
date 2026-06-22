@@ -1,17 +1,12 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
-import { auth } from "@/lib/auth";
+import { getCurrentDbUser } from "@/lib/clerk-user";
 import { UploadThingError } from "uploadthing/server";
 
 const f = createUploadthing();
 
-async function requireAuth() {
-  const session = await auth();
-  if (!session?.user) throw new UploadThingError("Unauthorized");
-  return session.user;
-}
-
 async function requireAdmin() {
-  const user = await requireAuth();
+  const user = await getCurrentDbUser();
+  if (!user) throw new UploadThingError("Unauthorized");
   if (user.role !== "ADMIN") throw new UploadThingError("Admin only");
   return user;
 }

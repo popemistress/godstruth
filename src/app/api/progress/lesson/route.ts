@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/clerk-user";
 import { db } from "@/lib/db";
 import { z } from "zod";
 
@@ -10,8 +10,8 @@ const schema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -24,9 +24,9 @@ export async function POST(req: NextRequest) {
   const { lessonId, completed, timeSpentSeconds } = parsed.data;
 
   const result = await db.lessonProgress.upsert({
-    where: { userId_lessonId: { userId: session.user.id, lessonId } },
+    where: { userId_lessonId: { userId, lessonId } },
     create: {
-      userId: session.user.id,
+      userId,
       lessonId,
       startedAt: new Date(),
       completedAt: completed ? new Date() : null,
@@ -44,8 +44,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -54,13 +54,13 @@ export async function GET(req: NextRequest) {
 
   if (lessonId) {
     const progress = await db.lessonProgress.findUnique({
-      where: { userId_lessonId: { userId: session.user.id, lessonId } },
+      where: { userId_lessonId: { userId, lessonId } },
     });
     return NextResponse.json(progress);
   }
 
   const allProgress = await db.lessonProgress.findMany({
-    where: { userId: session.user.id },
+    where: { userId },
     include: {
       lesson: {
         select: { id: true, title: true, type: true, chapter: { select: { content: { select: { title: true, slug: true } } } } },

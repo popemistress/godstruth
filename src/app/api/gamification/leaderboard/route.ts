@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/clerk-user";
 import { db } from "@/lib/db";
 
 export async function GET() {
-  const session = await auth();
+  const currentUserId = await getCurrentUserId();
 
   // Get all users with their completed lesson counts (excluding SUPPLEMENT and IMAGE)
   const allProgress = await db.lessonProgress.findMany({
@@ -70,20 +70,20 @@ export async function GET() {
     displayName: (data.name ?? "Anonymous").split(" ")[0],
     lessonsCompleted: data.lessons,
     coursesCompleted: getCoursesCompleted(userId),
-    isCurrentUser: session?.user?.id === userId,
+    isCurrentUser: currentUserId === userId,
   }));
 
   // Current user rank (if authenticated and outside top 20)
   let currentUserRank: { rank: number; displayName: string; lessonsCompleted: number; coursesCompleted: number; isCurrentUser: true } | null = null;
-  if (session?.user?.id) {
-    const currentUserIdx = sorted.findIndex(([uid]) => uid === session.user?.id);
+  if (currentUserId) {
+    const currentUserIdx = sorted.findIndex(([uid]) => uid === currentUserId);
     if (currentUserIdx >= 20) {
       const [, data] = sorted[currentUserIdx];
       currentUserRank = {
         rank: currentUserIdx + 1,
         displayName: (data.name ?? "Anonymous").split(" ")[0],
         lessonsCompleted: data.lessons,
-        coursesCompleted: getCoursesCompleted(session.user.id),
+        coursesCompleted: getCoursesCompleted(currentUserId),
         isCurrentUser: true,
       };
     }
