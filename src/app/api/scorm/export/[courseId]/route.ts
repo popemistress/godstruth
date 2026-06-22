@@ -188,7 +188,7 @@ ${resourcesXml}
   const buffer = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
   const slug = course.slug ?? course.id;
 
-  return new NextResponse(buffer, {
+  return new NextResponse(buffer as unknown as BodyInit, {
     status: 200,
     headers: {
       "Content-Type": "application/zip",
