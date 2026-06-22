@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
   const ext = path.split(".").pop()?.toLowerCase() ?? "bin";
   const contentType = MIME_MAP[ext] ?? "application/octet-stream";
 
-  return new NextResponse(content, {
+  return new NextResponse(content as unknown as BodyInit, {
     status: 200,
     headers: {
       "Content-Type": contentType,
