@@ -40,8 +40,43 @@ export function LessonContent({ contentHtml, lessonId, className }: LessonConten
       if (saved) showSaved(det, saved);
     });
 
-    // Single delegated click handler for submit buttons AND lightbox triggers
+    // Single delegated click handler for quiz options, submit buttons, and lightbox triggers
     const onClick = (e: MouseEvent) => {
+      // ── Multiple-choice quiz option ──────────────────────────────────────────
+      const quizOpt = (e.target as Element).closest<HTMLElement>(".quiz-option");
+      if (quizOpt) {
+        const questionDiv = quizOpt.closest<HTMLElement>(".quiz-question");
+        if (!questionDiv) return;
+        // Ignore if already answered
+        const feedback = questionDiv.querySelector<HTMLElement>(".quiz-feedback");
+        if (feedback && !feedback.classList.contains("hidden")) return;
+        // Disable all options
+        questionDiv.querySelectorAll<HTMLButtonElement>(".quiz-option").forEach((opt) => {
+          opt.disabled = true;
+          const letter = opt.querySelector<HTMLElement>(".quiz-option-letter");
+          if (opt.dataset.correct === "true") {
+            opt.classList.add("border-emerald-400", "bg-emerald-50");
+            if (letter) {
+              letter.classList.remove("bg-gray-100", "text-gray-600");
+              letter.classList.add("bg-emerald-500", "text-white");
+            }
+          } else if (opt === quizOpt) {
+            opt.classList.add("border-red-300", "bg-red-50");
+            if (letter) {
+              letter.classList.remove("bg-gray-100", "text-gray-600");
+              letter.classList.add("bg-red-400", "text-white");
+            }
+          }
+        });
+        // Show feedback
+        if (feedback) feedback.classList.remove("hidden");
+        const isCorrect = quizOpt.dataset.correct === "true";
+        questionDiv
+          .querySelector<HTMLElement>(isCorrect ? ".quiz-feedback-correct" : ".quiz-feedback-wrong")
+          ?.classList.remove("hidden");
+        return;
+      }
+
       const btn = (e.target as Element).closest<HTMLElement>(".q-submit");
       if (btn) {
         const det = btn.closest<HTMLElement>("details[data-qi]");

@@ -9,7 +9,7 @@
  * The goal: the browser never receives the entire lesson DOM at once.
  */
 
-import { parseMarkdown } from "./lesson-parser";
+import { parseMarkdown, parseQuizJson } from "./lesson-parser";
 
 export interface PaginateOptions {
   /** Minimum character count before pagination is considered. */
@@ -35,6 +35,12 @@ export function paginateLessonContent(
   }
 
   const trimmed = content.trim();
+
+  // Quiz JSON — render with the dedicated quiz renderer, no pagination needed.
+  if (trimmed.startsWith("{") && trimmed.includes('"questions"')) {
+    return { pages: [parseQuizJson(trimmed)], totalPages: 1 };
+  }
+
   if (trimmed.length < minLength) {
     const isHtml = trimmed.startsWith("<");
     return { pages: [isHtml ? content : parseMarkdown(content)], totalPages: 1 };

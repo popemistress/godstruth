@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   BookOpen, Play, Headphones, ChevronRight, ChevronLeft,
-  ArrowLeft, Clock, Video, CheckCircle, BookMarked,
+  ArrowLeft, Clock, Video, CheckCircle, BookMarked, ClipboardCheck,
 } from "lucide-react";
 import type { CourseChapter, CourseLesson } from "@prisma/client";
 import { LessonContent } from "./LessonContent";
@@ -80,6 +80,7 @@ export function LessonViewer({
   const hasReading = !!lesson.content;
   const isImage = lesson.type === "IMAGE";
   const isSupplement = lesson.type === "SUPPLEMENT";
+  const isQuiz = lesson.type === "QUIZ";
   const isPaginated = totalPages > 1;
   const progressPct = Math.round(((lessonIndex + 1) / totalLessons) * 100);
 
@@ -168,8 +169,8 @@ export function LessonViewer({
           </motion.div>
         ) : (
           <motion.div variants={fadeUp}>
-            <div className={`relative w-full rounded-2xl overflow-hidden shadow-sm border-4 ${isSupplement ? "border-violet-300" : "border-emerald-300"}`}>
-              <div className={`h-28 sm:h-36 ${isSupplement ? "bg-gradient-to-br from-violet-800 via-purple-700 to-violet-900" : "bg-gradient-to-br from-emerald-800 via-teal-700 to-emerald-900"} flex items-center justify-center px-8`}>
+            <div className={`relative w-full rounded-2xl overflow-hidden shadow-sm border-4 ${isSupplement ? "border-violet-300" : isQuiz ? "border-amber-300" : "border-emerald-300"}`}>
+              <div className={`h-28 sm:h-36 ${isSupplement ? "bg-gradient-to-br from-violet-800 via-purple-700 to-violet-900" : isQuiz ? "bg-gradient-to-br from-amber-800 via-orange-700 to-amber-900" : "bg-gradient-to-br from-emerald-800 via-teal-700 to-emerald-900"} flex items-center justify-center px-8`}>
                 <div className="text-center">
                   <p className="text-white/50 text-[10px] font-black uppercase tracking-[0.25em] mb-2">{chapter.title}</p>
                   <h2 className="text-white font-serif font-bold text-xl sm:text-2xl leading-snug max-w-xl mx-auto drop-shadow-sm">
@@ -200,7 +201,12 @@ export function LessonViewer({
                 <Headphones className="h-3 w-3" /> Podcast
               </span>
             )}
-            {hasReading && !isImage && !isSupplement && (
+            {isQuiz && (
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
+                <ClipboardCheck className="h-3 w-3" /> Assessment
+              </span>
+            )}
+            {hasReading && !isImage && !isSupplement && !isQuiz && (
               <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
                 <BookOpen className="h-3 w-3" /> Reading
               </span>

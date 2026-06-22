@@ -79,6 +79,9 @@ const CHIP_CLASS =
   "transition-colors duration-150 select-none";
 
 function scriptureChips(text: string): string {
+  // Guard: skip expensive regex processing on very large content to avoid timeouts
+  if (text.length > 15_000) return escHtml(text);
+
   // Pass 0: strip legacy markdown-style scripture links
   let result = text.replace(
     /\[\s*([^\]]+?)\s*\]\(data-scripture\s*=\s*"\s*([^"]+?)\s*"\s*\)/g,
@@ -90,8 +93,9 @@ function scriptureChips(text: string): string {
   );
 
   // Pass 1: parenthetical groups "(Mt. 7:7-11; 18:19-20)"
+  // Restrict to single-line to avoid catastrophic backtracking on large content
   result = result.replace(
-    /\(([^)]{3,120}?\d+:\d+[^)]{0,100}?)\)/g,
+    /\(([^\)\n\r]{3,120}?\d+:\d+[^\)\n\r]{0,100}?)\)/g,
     (_, inner) => {
       const refs = parseScriptureList(inner);
       if (refs.length === 0) return `(${inner})`;
@@ -248,6 +252,131 @@ function stripLeadingHeaders(md: string): string {
   return lines.slice(i).join("\n");
 }
 
+// ─── Quiz JSON renderer ──────────────────────────────────────────────────────
+
+interface QuizQuestion {
+  id: number;
+  type: "multiple_choice" | "short_answer";
+  question: string;
+  options?: string[];
+  answer: string;
+  explanation?: string;
+}
+
+export function parseQuizJson(jsonStr: string): string {
+  let data: { questions: QuizQuestion[] };
+  try {
+    data = JSON.parse(jsonStr);
+  } catch {
+    return `<p class="text-gray-600 text-[15px] leading-relaxed">Quiz content could not be loaded.</p>`;
+  }
+
+  const questions: QuizQuestion[] = data.questions ?? [];
+
+  const questionItems = questions
+    .map((q, qi) => {
+      if (q.type === "multiple_choice" && q.options && q.options.length > 0) {
+        const optionItems = q.options
+          .map((opt) => {
+            const letter = opt.match(/^([A-D])\)/)?.[1] ?? "?";
+            const text = opt.replace(/^[A-D]\)\s*/, "");
+            const isCorrect = letter === q.answer;
+            return `
+              <button type="button" data-correct="${isCorrect}"
+                class="quiz-option w-full flex items-start gap-3 text-left px-4 py-3 rounded-xl border border-gray-200 bg-white hover:border-emerald-300 hover:bg-emerald-50 transition-all duration-150 cursor-pointer">
+                <span class="quiz-option-letter flex-shrink-0 w-7 h-7 rounded-full bg-gray-100 text-gray-600 text-[12px] font-black flex items-center justify-center transition-colors duration-150">${escHtml(letter)}</span>
+                <span class="text-gray-800 text-[15px] leading-relaxed flex-1 pt-0.5">${escHtml(text)}</span>
+              </button>`;
+          })
+          .join("");
+
+        const explanationCorrect = q.explanation
+          ? `<p class="text-emerald-700 text-[13px] mt-1 leading-relaxed">${escHtml(q.explanation)}</p>`
+          : "";
+        const explanationWrong = q.explanation
+          ? `<p class="text-red-700 text-[13px] mt-1 leading-relaxed">${escHtml(q.explanation)}</p>`
+          : "";
+
+        return `
+          <div class="quiz-question rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+            <div class="px-5 py-4 border-b border-gray-100">
+              <div class="flex items-start gap-3">
+                <span class="flex-shrink-0 w-7 h-7 rounded-full bg-emerald-600 text-white text-[12px] font-black flex items-center justify-center mt-0.5">${qi + 1}</span>
+                <p class="text-gray-800 text-[15px] leading-relaxed font-medium pt-0.5">${escHtml(q.question)}</p>
+              </div>
+            </div>
+            <div class="px-5 py-4 space-y-2">${optionItems}</div>
+            <div class="quiz-feedback hidden px-5 pb-4 pt-1 space-y-2">
+              <div class="quiz-feedback-correct hidden rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3">
+                <p class="text-emerald-800 text-sm font-semibold">Correct!</p>
+                ${explanationCorrect}
+              </div>
+              <div class="quiz-feedback-wrong hidden rounded-lg bg-red-50 border border-red-200 px-4 py-3">
+                <p class="text-red-800 text-sm font-semibold">Not quite — the correct answer is <strong>${escHtml(q.answer)}</strong>.</p>
+                ${explanationWrong}
+              </div>
+            </div>
+          </div>`;
+      }
+
+      // short_answer
+      return `
+        <details data-qi="${qi}" class="group rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
+          <summary class="flex items-start gap-3 px-5 py-4 cursor-pointer list-none select-none hover:bg-gray-50 transition-colors duration-150">
+            <span class="flex-shrink-0 w-7 h-7 rounded-full bg-gray-200 text-gray-700 text-[12px] font-black flex items-center justify-center mt-0.5 group-open:bg-gray-700 group-open:text-white transition-colors duration-200">${qi + 1}</span>
+            <span class="text-gray-800 text-[15px] leading-relaxed flex-1 font-medium pt-0.5">${escHtml(q.question)}</span>
+            <svg class="w-4 h-4 text-gray-400 ml-2 mt-1.5 flex-shrink-0 transition-transform duration-200 group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </summary>
+          <div class="px-5 pb-4 pt-3 bg-gray-50 border-t border-gray-200">
+            <div class="q-saved hidden flex gap-3">
+              <div class="flex-shrink-0 w-0.5 bg-gradient-to-b from-gray-600 to-gray-300 rounded-full mt-1 self-stretch"></div>
+              <p class="q-saved-text text-gray-700 text-[14px] leading-relaxed flex-1"></p>
+            </div>
+            <div class="q-form flex flex-col gap-3">
+              <textarea
+                class="q-textarea w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-[14px] text-gray-800 leading-relaxed placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent resize-none transition-colors"
+                rows="3"
+                placeholder="Write your response here…"
+              ></textarea>
+              <div class="flex justify-end">
+                <button type="button"
+                  class="q-submit inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 active:bg-gray-900 text-white text-[13px] font-semibold px-4 py-2 rounded-lg transition-colors duration-150 cursor-pointer">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                  Save Response
+                </button>
+              </div>
+            </div>
+          </div>
+        </details>`;
+    })
+    .join("");
+
+  return `
+    <div class="quiz-block mb-8 rounded-2xl overflow-hidden border border-gray-300 shadow-lg">
+      <div class="bg-gradient-to-br from-gray-800 to-gray-900 px-6 py-5">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <p class="text-gray-400 text-[11px] font-bold uppercase tracking-[0.18em] mb-1">Module Assessment</p>
+            <h3 class="text-white font-bold text-lg leading-tight">Knowledge Check</h3>
+          </div>
+          <div class="text-right hidden sm:block">
+            <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/10 text-white font-black text-base">${questions.length}</span>
+            <p class="text-gray-400 text-[10px] mt-0.5">questions</p>
+          </div>
+        </div>
+        <p class="mt-4 text-gray-400 text-[13px] leading-relaxed border-t border-white/10 pt-3">Answer each question to test your understanding of this module's key concepts. Multiple choice answers are checked instantly.</p>
+      </div>
+      <div class="bg-[#FAFAF8] px-4 py-5 space-y-3">
+        ${questionItems}
+      </div>
+    </div>`;
+}
+
 export function parseMarkdown(md: string): string {
   const stripped = stripLeadingHeaders(md);
   const rawLines = normalizeMarkdown(stripped).split("\n");
@@ -352,17 +481,21 @@ export function parseMarkdown(md: string): string {
     }
 
     // ── Blockquote ───────────────────────────────────────────────────────────
-    if (line.startsWith("> ")) {
+    if (line.startsWith(">")) {
       const bqLines: string[] = [];
-      while (i < lines.length && lines[i].startsWith("> ")) {
-        bqLines.push(inline(lines[i].slice(2)));
+      while (i < lines.length && lines[i].startsWith(">")) {
+        const raw = lines[i];
+        // Strip all leading blockquote markers (including nested `> > >`) and
+        // any spaces that follow them so the rendered text sits cleanly to the
+        // right of the single left accent bar.
+        const content = raw.replace(/^(\s*\>)+\s*/, "");
+        bqLines.push(inline(content));
         i++;
       }
       const isShort = bqLines.join(" ").length < 200;
       html.push(`
-        <blockquote class="relative my-6 pl-5 pr-4 py-4 border-l-4 border-amber-400 bg-gradient-to-r from-amber-50 to-orange-50/30 rounded-r-xl overflow-hidden">
-          <div class="absolute top-0 left-0 w-1 h-full bg-amber-400 rounded-l"></div>
-          <p class="italic text-gray-800 ${isShort ? "text-base" : "text-sm"} leading-relaxed font-medium">${bqLines.join("<br/>")}</p>
+        <blockquote class="my-6 pr-4 py-4 border-l-4 border-amber-400 bg-gradient-to-r from-amber-50 to-orange-50/30 rounded-r-xl overflow-hidden" style="padding-left:24px">
+          <p class="text-left italic text-gray-800 ${isShort ? "text-base" : "text-sm"} leading-relaxed font-medium">${bqLines.join("<br/>")}</p>
         </blockquote>`);
       continue;
     }
@@ -565,7 +698,12 @@ export function parseMarkdown(md: string): string {
       i++;
     }
 
-    if (paraLines.length === 0) continue;
+    // Guard against lines that fall through every branch above (e.g. malformed
+    // markdown). Advance the cursor so the main loop can never spin forever.
+    if (paraLines.length === 0) {
+      i++;
+      continue;
+    }
 
     for (const { text: para, lineIdx: paraLineIdx } of paraLines) {
       const trimmed = para.trim();

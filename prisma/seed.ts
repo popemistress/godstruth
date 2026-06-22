@@ -104,7 +104,7 @@ async function main() {
       slug: "angels",
       description: "A comprehensive study of angels — their nature, roles, and ministry throughout Scripture, from creation to the end of time.",
       thumbnail: "/angels-cover.jpg",
-      order: 200,
+      order: 500,
       published: true,
       featured: true,
       premium: false,
@@ -115,6 +115,18 @@ async function main() {
       slug: "exploring-genesis-tim",
       description: "A deep dive into the themes and stories of Genesis.",
       published: true,
+      premium: false,
+    },
+    {
+      type: "COURSE" as const,
+      title: "Satan: Understanding the Adversary",
+      slug: "satan",
+      description:
+        "A comprehensive course covering Satan's nature and origin, his psychological and relational warfare, territorial principalities, demonic access, end-times conspiracy, and the believer's delegated authority.",
+      thumbnail: "/satan-cover.png",
+      order: 700,
+      published: true,
+      featured: true,
       premium: false,
     },
   ];

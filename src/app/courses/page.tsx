@@ -30,7 +30,7 @@ export default async function CoursesPage({ searchParams }: PageProps) {
         },
       },
     },
-    orderBy: [{ order: "desc" }, { featured: "desc" }, { createdAt: "desc" }],
+    orderBy: [{ order: "asc" }, { featured: "desc" }, { createdAt: "desc" }],
   });
 
   const totalLessons = courses.reduce(
