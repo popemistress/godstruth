@@ -1,6 +1,7 @@
 import { PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { BIBLE_EDITIONS } from "./bibles-data";
+import { seedHolySpiritCourse } from "../holyspirit/seed/holy-spirit-seed";
 
 const db = new PrismaClient();
 
@@ -140,6 +141,9 @@ async function main() {
   }
 
   console.log("✅ Sample content seeded");
+
+  // ── Holy Spirit premium course ────────────────────────────────────────────
+  await seedHolySpiritCourse(db);
 
   // ── Bible Editions ────────────────────────────────────────────────────────
   for (const bible of BIBLE_EDITIONS) {
