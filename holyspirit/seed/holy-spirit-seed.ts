@@ -22,7 +22,7 @@ export const HOLY_SPIRIT_COURSE = {
   description:
     "A seven-module transformational journey into the person, presence, and power of the Holy Spirit. Move from doctrine to daily dependence as you learn to hear His voice, walk in His fruit, exercise His gifts, and join His mission.",
   thumbnail: "https://hm8qhte0o7.ufs.sh/f/tgGixBSSw8OsWHt8EM49Elc9Cf1yMTquZF6SO8bsvVX7eRiY",
-  order: 600,
+  order: 400,
   published: true,
   featured: true,
   premium: true,

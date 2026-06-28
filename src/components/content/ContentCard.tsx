@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Play, BookOpen, Mic, GraduationCap, Lock, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatDuration } from "@/lib/utils";
+import { normalizeImageUrl } from "@/lib/images";
 import type { ContentWithRelations } from "@/types";
 
 const TYPE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -28,15 +29,16 @@ interface ContentCardProps {
 export function ContentCard({ content }: ContentCardProps) {
   const Icon = TYPE_ICONS[content.type] ?? BookOpen;
   const typeLabel = TYPE_LABELS[content.type] ?? content.type;
+  const thumbnailUrl = normalizeImageUrl(content.thumbnail);
 
   return (
     <Link href={`/courses/${content.slug}`} className="group block">
       <div className="card hover:shadow-md transition-shadow">
         {/* Thumbnail */}
         <div className="relative aspect-video bg-neutral-20 overflow-hidden">
-          {content.thumbnail ? (
+          {thumbnailUrl ? (
             <Image
-              src={content.thumbnail}
+              src={thumbnailUrl}
               alt={content.title}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

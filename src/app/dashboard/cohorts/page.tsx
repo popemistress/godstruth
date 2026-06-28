@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { normalizeImageUrl } from "@/lib/images";
 import { Users, CalendarDays, ArrowRight, GraduationCap } from "lucide-react";
 
 interface CohortItem {
@@ -59,8 +60,8 @@ export default function CohortsPage() {
           {cohorts.map((cohort) => (
             <div key={cohort.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
               <div className="flex items-start gap-4">
-                {cohort.course.thumbnail ? (
-                  <img src={cohort.course.thumbnail} alt={cohort.course.title} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
+                {normalizeImageUrl(cohort.course.thumbnail) ? (
+                  <img src={normalizeImageUrl(cohort.course.thumbnail)!} alt={cohort.course.title} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
                 ) : (
                   <div className="w-16 h-16 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
                     <GraduationCap className="h-6 w-6 text-emerald-300" />

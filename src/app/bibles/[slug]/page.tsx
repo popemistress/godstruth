@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { db } from "@/lib/db";
+import { normalizeImageUrl } from "@/lib/images";
 import { ArrowLeft, BookOpen, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { BibleActions } from "@/components/bibles/BibleActions";
@@ -79,9 +80,9 @@ export default async function BibleDetailPage({ params }: PageProps) {
               background: `linear-gradient(160deg, ${bible.gradientFrom} 0%, ${bible.gradientTo} 100%)`,
             }}
           >
-            {bible.coverUrl ? (
+            {normalizeImageUrl(bible.coverUrl) ? (
               <Image
-                src={bible.coverUrl}
+                src={normalizeImageUrl(bible.coverUrl)!}
                 alt={bible.title}
                 fill
                 className="object-cover"

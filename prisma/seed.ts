@@ -2,6 +2,8 @@ import { PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { BIBLE_EDITIONS } from "./bibles-data";
 import { seedHolySpiritCourse } from "../holyspirit/seed/holy-spirit-seed";
+import { seedGodTheFatherCourse } from "../GOD/god-the-father-seed";
+import { seedJesusCourse } from "../jesus/seed/jesus-seed";
 
 const db = new PrismaClient();
 
@@ -145,6 +147,12 @@ async function main() {
   // ── Holy Spirit premium course ────────────────────────────────────────────
   await seedHolySpiritCourse(db);
 
+  // ── God the Father free course ─────────────────────────────────────────────
+  await seedGodTheFatherCourse(db);
+
+  // ── Jesus premium course ──────────────────────────────────────────────────
+  await seedJesusCourse(db);
+
   // ── Bible Editions ────────────────────────────────────────────────────────
   for (const bible of BIBLE_EDITIONS) {
     await db.bibleEdition.upsert({
@@ -170,6 +178,25 @@ async function main() {
   }
 
   console.log(`✅ Bible editions seeded (${BIBLE_EDITIONS.length} entries)`);
+
+  // ── Enforce canonical course order (always runs last so seed order doesn't matter) ──
+  const COURSE_ORDER = [
+    { slug: "gods-universal-plan-for-creation", order: 100 },
+    { slug: "god-the-father",                   order: 200 },
+    { slug: "jesus",                             order: 300 },
+    { slug: "holy-spirit",                       order: 400 },
+    { slug: "angels",                            order: 500 },
+    { slug: "satan",                             order: 600 },
+    { slug: "demons",                            order: 700 },
+    { slug: "hell",                              order: 800 },
+  ];
+  for (const { slug, order } of COURSE_ORDER) {
+    try {
+      await db.content.update({ where: { slug }, data: { order } });
+    } catch { /* course not yet seeded — skip */ }
+  }
+  console.log("✅ Course order enforced");
+
   console.log("\n🎉 Seed complete!");
   console.log("─────────────────────────────────");
   console.log("Admin email:    admin@godstruth.net");

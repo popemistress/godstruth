@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay, A11y } from "swiper/modules";
+import { normalizeImageUrl } from "@/lib/images";
 import type { BibleEdition } from "@prisma/client";
 import { BookOpen, Star, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -34,7 +35,8 @@ function CanonDots({ rating }: { rating: number }) {
 }
 
 function BibleCard({ bible }: { bible: BibleEdition }) {
-  const hasCover = Boolean(bible.coverUrl);
+  const coverUrl = normalizeImageUrl(bible.coverUrl);
+  const hasCover = Boolean(coverUrl);
   return (
     <Link href={`/bibles/${bible.slug}`} className="block group h-full">
       <div
@@ -55,7 +57,7 @@ function BibleCard({ bible }: { bible: BibleEdition }) {
         {hasCover && (
           <>
             <Image
-              src={bible.coverUrl!}
+              src={coverUrl}
               alt={bible.title}
               fill
               className="object-cover"

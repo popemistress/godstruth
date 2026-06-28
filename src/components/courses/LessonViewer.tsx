@@ -13,6 +13,7 @@ import type { CourseChapter, CourseLesson } from "@prisma/client";
 import { LessonContent } from "./LessonContent";
 import { ChartFullscreen } from "./ChartFullscreen";
 import { cn } from "@/lib/utils";
+import { normalizeImageUrl } from "@/lib/images";
 import { ScriptureTooltipProvider } from "./ScriptureTooltip";
 import { trackLessonComplete } from "@/lib/xapi-client";
 
@@ -78,6 +79,7 @@ export function LessonViewer({
   const contentPanelRef = useRef<HTMLDivElement>(null);
   const hasVideo = !!lesson.videoUrl;
   const hasPodcast = !!lesson.audioUrl;
+  const coverUrl = normalizeImageUrl(lesson.coverUrl);
   const hasReading = !!lesson.content;
   const isImage = lesson.type === "IMAGE";
   const isSupplement = lesson.type === "SUPPLEMENT";
@@ -176,11 +178,11 @@ export function LessonViewer({
         </motion.div>
 
         {/* ── Lesson header image ── */}
-        {!isImage && (lesson.coverUrl ? (
+        {!isImage && (coverUrl ? (
           <motion.div variants={fadeUp} className="-mx-2 sm:-mx-0">
             <div className="relative w-full aspect-[16/5] rounded-2xl overflow-hidden shadow-lg border-4 border-amber-400">
               <Image
-                src={lesson.coverUrl}
+                src={coverUrl}
                 alt={lesson.title}
                 fill
                 priority

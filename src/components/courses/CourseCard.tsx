@@ -8,6 +8,7 @@ import {
   GraduationCap, BookOpen, Clock, ChevronRight,
   Maximize2, X, ZoomIn, ZoomOut,
 } from "lucide-react";
+import { normalizeImageUrl } from "@/lib/images";
 import type { Content, CourseChapter } from "@prisma/client";
 
 interface CourseCardProps {
@@ -18,6 +19,7 @@ interface CourseCardProps {
 }
 
 export function CourseCard({ course, isFirst }: CourseCardProps) {
+  const thumbnailUrl = normalizeImageUrl(course.thumbnail);
   const totalLessons = course.chapters.reduce(
     (acc, ch) => acc + ch.lessons.filter((lesson) => lesson.type !== "SUPPLEMENT" && lesson.type !== "IMAGE").length,
     0
@@ -51,10 +53,10 @@ export function CourseCard({ course, isFirst }: CourseCardProps) {
 
         {/* Thumbnail — click to expand fullscreen */}
         <div className="relative aspect-video bg-gray-100 overflow-hidden flex-shrink-0">
-          {course.thumbnail ? (
+          {thumbnailUrl ? (
             <>
               <Image
-                src={course.thumbnail}
+                src={thumbnailUrl}
                 alt={course.title}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -141,7 +143,7 @@ export function CourseCard({ course, isFirst }: CourseCardProps) {
 
       {/* ── Fullscreen Lightbox ── */}
       <AnimatePresence>
-        {lightboxOpen && course.thumbnail && (
+        {lightboxOpen && thumbnailUrl && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -200,7 +202,7 @@ export function CourseCard({ course, isFirst }: CourseCardProps) {
               >
                 <div style={{ transform: `scale(${scale})`, transformOrigin: "top center" }}>
                   <Image
-                    src={course.thumbnail}
+                    src={thumbnailUrl}
                     alt={course.title}
                     width={1920}
                     height={1080}

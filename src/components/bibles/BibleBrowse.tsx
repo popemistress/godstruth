@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { normalizeImageUrl } from "@/lib/images";
 import type { BibleEdition } from "@prisma/client";
 import { Search, BookOpen, Star, ChevronDown } from "lucide-react";
 
@@ -11,7 +12,8 @@ const PAGE_SIZE = 12;
 const KNOWN_TRANSLATIONS = ["KJV", "NIV", "NIrV", "NASB", "NKJV", "ESV", "NLT", "CSB", "HCSB", "NRSV", "AMP", "MSG", "CEB", "CJB", "VOICE", "TPT", "DARBY", "TLV", "TLB", "NCV"];
 
 function MiniCard({ bible }: { bible: BibleEdition }) {
-  const hasCover = Boolean(bible.coverUrl);
+  const coverUrl = normalizeImageUrl(bible.coverUrl);
+  const hasCover = Boolean(coverUrl);
   return (
     <Link href={`/bibles/${bible.slug}`} className="group block">
       <div
@@ -28,7 +30,7 @@ function MiniCard({ bible }: { bible: BibleEdition }) {
         {/* Cover image */}
         {hasCover && (
           <>
-            <Image src={bible.coverUrl!} alt={bible.title} fill className="object-cover" sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 20vw" />
+            <Image src={coverUrl} alt={bible.title} fill className="object-cover" sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 20vw" />
             {/* Dark overlay for text legibility */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/10" />
           </>

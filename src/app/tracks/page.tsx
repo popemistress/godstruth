@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { normalizeImageUrl } from "@/lib/images";
 import { GraduationCap, CalendarDays, BookOpen, ArrowRight } from "lucide-react";
 
 export const metadata = {
@@ -48,17 +49,19 @@ export default async function TracksPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {tracks.map((track) => (
+            {tracks.map((track) => {
+              const thumbnailUrl = normalizeImageUrl(track.course.thumbnail);
+              return (
               <Link
                 key={track.id}
                 href={`/tracks/${track.slug}`}
                 className="group block rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
               >
                 <div className="flex items-start gap-4">
-                  {track.course.thumbnail ? (
+                  {thumbnailUrl ? (
                     <div className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
                       <img
-                        src={track.course.thumbnail}
+                        src={thumbnailUrl}
                         alt={track.course.title}
                         className="w-full h-full object-cover"
                       />
@@ -92,7 +95,8 @@ export default async function TracksPage() {
                   <ArrowRight className="h-5 w-5 text-gray-300 group-hover:text-emerald-500 transition-colors flex-shrink-0 mt-1" />
                 </div>
               </Link>
-            ))}
+            );
+            })}
           </div>
         )}
       </section>

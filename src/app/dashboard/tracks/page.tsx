@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { normalizeImageUrl } from "@/lib/images";
 import {
   GraduationCap, CalendarDays, ChevronRight, CheckCircle2, Clock,
   ArrowRight, Award,
@@ -86,6 +87,7 @@ export default function DashboardTracksPage() {
             const progress = enrollment.completedAt
               ? 100
               : Math.round(((enrollment.currentDay - 1) / totalDays) * 100);
+            const thumbnailUrl = normalizeImageUrl(enrollment.track.course.thumbnail);
 
             return (
               <div
@@ -93,9 +95,9 @@ export default function DashboardTracksPage() {
                 className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start gap-4">
-                  {enrollment.track.course.thumbnail ? (
+                  {thumbnailUrl ? (
                     <img
-                      src={enrollment.track.course.thumbnail}
+                      src={thumbnailUrl}
                       alt={enrollment.track.course.title}
                       className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
                     />
