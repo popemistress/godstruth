@@ -57,7 +57,7 @@ function BibleCard({ bible }: { bible: BibleEdition }) {
         {hasCover && (
           <>
             <Image
-              src={coverUrl}
+              src={coverUrl!}
               alt={bible.title}
               fill
               className="object-cover"

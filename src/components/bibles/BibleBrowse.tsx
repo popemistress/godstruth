@@ -30,7 +30,7 @@ function MiniCard({ bible }: { bible: BibleEdition }) {
         {/* Cover image */}
         {hasCover && (
           <>
-            <Image src={coverUrl} alt={bible.title} fill className="object-cover" sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 20vw" />
+            <Image src={coverUrl!} alt={bible.title} fill className="object-cover" sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 20vw" />
             {/* Dark overlay for text legibility */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/10" />
           </>
