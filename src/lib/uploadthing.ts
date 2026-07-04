@@ -19,8 +19,8 @@ async function compressAndReplace(
     const raw = Buffer.from(await res.arrayBuffer());
 
     const compressed = await sharp(raw)
-      .resize({ width: 1600, withoutEnlargement: true })
-      .jpeg({ quality: 82, mozjpeg: true })
+      .resize({ width: 2000, withoutEnlargement: true })
+      .jpeg({ quality: 88, mozjpeg: true })
       .toBuffer();
 
     // Only replace if we actually saved bytes

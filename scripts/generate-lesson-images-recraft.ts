@@ -135,7 +135,7 @@ async function generateImage(prompt: string): Promise<Buffer> {
 async function compressImage(buffer: Buffer): Promise<Buffer> {
   return sharp(buffer)
     .resize({ width: 1536, withoutEnlargement: true })
-    .jpeg({ quality: 82, mozjpeg: true })
+    .jpeg({ quality: 88, mozjpeg: true })
     .toBuffer();
 }
 

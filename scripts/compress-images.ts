@@ -34,11 +34,11 @@ async function compress(filePath: string) {
     : img;
 
   if (ext === ".png") {
-    await pipeline.png({ quality: 80, compressionLevel: 9, effort: 10 }).toFile(tmp);
+    await pipeline.png({ quality: 90, compressionLevel: 6 }).toFile(tmp);
   } else if (ext === ".jpg" || ext === ".jpeg") {
-    await pipeline.jpeg({ quality: 82, mozjpeg: true }).toFile(tmp);
+    await pipeline.jpeg({ quality: 88, mozjpeg: true }).toFile(tmp);
   } else if (ext === ".webp") {
-    await pipeline.webp({ quality: 82, effort: 6 }).toFile(tmp);
+    await pipeline.webp({ quality: 88, effort: 4 }).toFile(tmp);
   }
 
   const afterBytes = statSync(tmp).size;
